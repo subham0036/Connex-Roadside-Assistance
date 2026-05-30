@@ -6,7 +6,7 @@ function postFast2Sms(apiKey, params) {
     const req = https.request(
       {
         hostname: "www.fast2sms.com",
-        path: "/dev/bulkV2",
+        path: "/dev/bulkV3",  // Changed from bulkV2 to V3
         method: "POST",
         headers: {
           authorization: apiKey,
@@ -57,39 +57,61 @@ async function sendViaFast2Sms(phone10, code) {
   const apiKey = process.env.FAST2SMS_API_KEY;
   if (!apiKey) return { sent: false, provider: null, reason: "no_api_key" };
 
-  const message = `Your Connex login code is ${code}. Valid for 5 minutes. Do not share.`;
+  const message = `Your Connex OTP is ${code}. Valid for 5 minutes. Do not share.`;
 
+  // Try 1: Standard OTP route with all parameters
   let result = await postFast2Sms(apiKey, {
-    route: "dlt",
+    route: "otp",
     variables_values: code,
     numbers: phone10,
+    message: message,
   });
 
-  console.log("[Connex SMS] DLT route response:", JSON.stringify(result, null, 2));
+  console.log("[Connex SMS] OTP route attempt 1:", JSON.stringify(result, null, 2));
 
+  // Try 2: If OTP route fails, try quick/general SMS route
   if (!result.sent) {
-    console.log("[Connex SMS] DLT failed, trying quick route...");
+    console.log("[Connex SMS] OTP route failed, trying quick/general SMS route...");
     result = await postFast2Sms(apiKey, {
       route: "q",
-      message,
-      language: "english",
-      flash: "0",
+      message: message,
       numbers: phone10,
     });
-    console.log("[Connex SMS] Quick route response:", JSON.stringify(result, null, 2));
+    console.log("[Connex SMS] Quick SMS route attempt 2:", JSON.stringify(result, null, 2));
   }
 
+  // Try 3: If still failing, try with Flash SMS
+  if (!result.sent) {
+    console.log("[Connex SMS] Quick route failed, trying flash SMS...");
+    result = await postFast2Sms(apiKey, {
+      route: "q",
+      message: message,
+      numbers: phone10,
+      flash: 0,
+    });
+    console.log("[Connex SMS] Flash SMS attempt 3:", JSON.stringify(result, null, 2));
+  }
+
+  // Check for specific error codes
   if (!result.sent && result.raw?.status_code === 999) {
     result.reason = "fast2sms_wallet";
     console.warn(
-      "[Connex SMS] ⚠️  Fast2SMS wallet LOW! Needs ₹100+ top-up. Check: https://www.fast2sms.com/dashboard"
+      "[Connex SMS] ⚠️  ERROR 999: Fast2SMS wallet LOW! Needs ₹100+ top-up. Check: https://www.fast2sms.com/dashboard"
+    );
+  }
+
+  if (!result.sent && result.raw?.status_code === 414) {
+    result.reason = "ip_blocked";
+    console.error(
+      "[Connex SMS] ❌ ERROR 414: IP is blacklisted. Need to whitelist IP in Fast2SMS dashboard."
     );
   }
 
   if (!result.sent) {
-    console.warn(`[Connex SMS] SMS to +91${phone10} failed. Code: ${code}`);
+    console.warn(`[Connex SMS] ❌ SMS to +91${phone10} failed after all attempts. Code: ${code}`);
+    console.warn(`[Connex SMS] Error reason:`, result.reason || "unknown");
   } else {
-    console.log(`[Connex SMS] ✓ SMS sent to +91${phone10}`);
+    console.log(`[Connex SMS] ✅ SMS sent to +91${phone10}`);
   }
 
   return result;
