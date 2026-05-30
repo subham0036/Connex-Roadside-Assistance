@@ -1,0 +1,30 @@
+.connex-live-map-wrap {
+  width: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--border-subtle, #e2e8f0);
+  overscroll-behavior: contain;
+  isolation: isolate;
+}
+
+.connex-live-map {
+  height: 100%;
+  width: 100%;
+  min-height: 280px;
+  z-index: 0;
+}
+
+.connex-live-map .leaflet-container {
+  height: 100%;
+  width: 100%;
+  font-family: inherit;
+}
+
+.connex-live-map .leaflet-control-container {
+  z-index: 2;
+}
+
+.connex-marker {
+  background: transparent !important;
+  border: none !important;
+}

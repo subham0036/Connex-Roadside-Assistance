@@ -1,0 +1,48 @@
+/* App-level helper styles */
+html, body {
+  min-height: 100%;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+}
+
+h2 {
+  color: var(--text-primary);
+}
+
+.app-main {
+  min-height: 100vh;
+}
+
+@media (max-width: 980px) {
+  .glass-card {
+    padding: 24px;
+  }
+}
+
+.white-glass-card,
+.white-glass-card p,
+.white-glass-card span,
+.white-glass-card label,
+.white-glass-card h2,
+.white-glass-card h3,
+.white-glass-card h4,
+.white-glass-card button,
+.white-glass-card a {
+  color: #111;
+}
+
+.white-glass-card input,
+.white-glass-card select,
+.white-glass-card textarea {
+  color: #111;
+  background: #fff;
+  border: 1px solid rgba(17, 17, 17, 0.08);
+}
+
+.white-glass-card input::placeholder,
+.white-glass-card select::placeholder,
+.white-glass-card textarea::placeholder {
+  color: #7a7a7a;
+}

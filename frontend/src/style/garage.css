@@ -1,0 +1,84 @@
+.garage-dashboard {
+  padding: 20px;
+  color: #111;
+}
+
+.requests-list {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.request-card {
+  width: 240px;
+  padding: 15px;
+  background: rgba(255,255,255,0.12);
+  border-radius: 10px;
+  backdrop-filter: blur(12px);
+  cursor: pointer;
+  transition: 0.2s;
+  color: #111;
+}
+
+.request-card:hover {
+  transform: scale(1.03);
+}
+
+/* Modal */
+.modal-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-box {
+  background: white;
+  padding: 30px;
+  width: 400px;
+  border-radius: 12px;
+  color: black;
+  position: relative;
+}
+
+.close-btn {
+  position: absolute;
+  right: 15px;
+  top: 15px;
+  background: red;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.assign-btn {
+  width: 100%;
+  margin-top: 10px;
+  padding: 12px;
+  background: #2d6cdf;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* Mechanics */
+.mechanic-card {
+  padding: 12px;
+  background: rgba(0,0,0,0.1);
+  border-radius: 8px;
+  margin-top: 10px;
+  cursor: pointer;
+}
+
+.mechanic-card.selected {
+  background: #2d6cdf;
+  color: white;
+}

@@ -1,0 +1,114 @@
+.sidebar {
+  position: fixed;
+  top: var(--navbar-height);
+  left: 0;
+  width: var(--sidebar-width);
+  height: calc(100vh - var(--navbar-height));
+  padding: var(--space-md);
+  background: #ffffff;
+  border-right: 1px solid var(--border-subtle);
+  overflow-y: auto;
+  z-index: 900;
+}
+
+.sidebar h3 {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  margin-bottom: 4px;
+}
+
+.sidebar-role {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  margin-bottom: var(--space-md);
+  font-family: var(--font-mono);
+}
+
+.sidebar a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  margin-bottom: 4px;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+  font-weight: 500;
+  border: 1px solid transparent;
+}
+
+.sidebar a:hover,
+.sidebar a.active {
+  background: var(--bg-dark);
+  color: #fff;
+  border-color: var(--bg-dark);
+}
+
+.sidebar-badge {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  padding: 2px 8px;
+  background: #fff;
+  color: var(--bg-dark);
+  border-radius: 999px;
+}
+
+.sidebar a.active .sidebar-badge {
+  background: var(--bg-deep);
+  color: var(--bg-dark);
+}
+
+.sidebar-divider {
+  height: 1px;
+  background: var(--border-subtle);
+  margin: var(--space-sm) 0;
+}
+
+.sidebar-hint {
+  margin-top: var(--space-lg);
+  padding: var(--space-sm);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  border: 1px dashed var(--border-subtle);
+  border-radius: var(--radius-sm);
+}
+
+@media (max-width: 900px) {
+  .sidebar {
+    position: fixed;
+    bottom: 0;
+    top: auto;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: auto;
+    max-height: none;
+    border-right: none;
+    border-top: 2px solid var(--bg-dark);
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 6px;
+    padding: 8px 10px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .sidebar h3,
+  .sidebar-role,
+  .sidebar-hint,
+  .sidebar-divider {
+    display: none;
+  }
+
+  .sidebar a {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    margin: 0;
+    padding: 10px 14px;
+    font-size: 0.8rem;
+  }
+}

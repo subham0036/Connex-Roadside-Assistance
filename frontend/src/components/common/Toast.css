@@ -1,0 +1,49 @@
+.connex-toast {
+  position: fixed;
+  top: calc(var(--navbar-height) + 12px);
+  right: 16px;
+  z-index: 3000;
+  width: min(360px, calc(100vw - 32px));
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 18px;
+  background: #0a0a0a;
+  color: #fff;
+  border-radius: var(--radius-md);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+  animation: toast-in 0.35s ease;
+}
+
+.connex-toast-body strong {
+  display: block;
+  font-size: 0.95rem;
+  margin-bottom: 4px;
+}
+
+.connex-toast-body p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #d4d4d4;
+  line-height: 1.4;
+}
+
+.connex-toast button {
+  border: none;
+  background: transparent;
+  color: #fff;
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -1,0 +1,21 @@
+/* Dashboard-specific controls for the global theme */
+.glass-card select,
+.glass-card input,
+.glass-card textarea {
+  font-size: 1rem;
+}
+
+.glass-card textarea {
+  min-height: 140px;
+  resize: vertical;
+}
+
+.btn-primary,
+.primary-btn,
+.find-btn {
+  min-width: 210px;
+}
+
+.card-heading {
+  color: var(--accent);
+}

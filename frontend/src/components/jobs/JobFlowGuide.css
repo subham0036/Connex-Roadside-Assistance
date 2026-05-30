@@ -1,0 +1,50 @@
+.job-flow-guide h3 {
+  margin-bottom: var(--space-md);
+  font-size: 1rem;
+}
+
+.job-flow-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--space-md);
+}
+
+.job-flow-list li {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.job-flow-list li:last-child {
+  border-bottom: none;
+}
+
+.job-flow-num {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #0a0a0a;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.job-flow-list strong {
+  display: block;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 2px;
+}
+
+.job-flow-list p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}

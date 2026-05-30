@@ -1,0 +1,124 @@
+/* ============================
+   GLOBAL DASHBOARD THEME
+   Connex Dark Glass UI
+   ============================ */
+
+:root {
+  --bg: #090b12;
+  --bg-surface: rgba(255, 255, 255, 0.08);
+  --bg-surface-strong: rgba(255, 255, 255, 0.12);
+  --border: rgba(255, 255, 255, 0.12);
+  --text: #f4f7fd;
+  --text-muted: #aab1c6;
+  --text-strong: #ffffff;
+  --accent: #ff7f31;
+  --accent-soft: rgba(255, 127, 49, 0.18);
+  --radius: 24px;
+  --shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
+}
+
+body {
+  background: transparent;
+  margin: 0;
+  color: var(--text);
+  font-family: "Inter", sans-serif;
+}
+
+.page-container {
+  width: 100%;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 20px 0;
+}
+
+.page-title {
+  font-size: clamp(1.9rem, 2.4vw, 2.4rem);
+  font-weight: 800;
+  color: var(--accent);
+  margin-bottom: 22px;
+  letter-spacing: -0.03em;
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: 26px;
+  border-radius: var(--radius);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.18);
+  color: var(--text);
+}
+
+.glass-card h3,
+.glass-card h4,
+.glass-card h2 {
+  color: var(--text-strong);
+}
+
+.glass-card p,
+.glass-card span,
+.glass-card label {
+  color: var(--text-muted);
+}
+
+.rescue-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--accent), #ff9857);
+  border: none;
+  padding: 14px 22px;
+  border-radius: 999px;
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+  margin-top: 10px;
+}
+
+.rescue-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 38px rgba(255, 127, 49, 0.22);
+}
+
+.rescue-input {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  margin-bottom: 14px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+  outline: none;
+}
+
+.rescue-input::placeholder {
+  color: rgba(255, 255, 255, 0.46);
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 26px;
+  margin-top: 24px;
+  align-items: start;
+}
+
+.map-wrapper {
+  height: 340px;
+  width: 100%;
+  border-radius: 22px;
+  overflow: hidden;
+  margin-top: 10px;
+}
+
+@media (max-width: 980px) {
+  .page-container {
+    padding: 18px 16px;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}

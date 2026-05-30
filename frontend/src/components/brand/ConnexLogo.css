@@ -1,0 +1,59 @@
+.connex-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  line-height: 1;
+}
+
+.cx-mark {
+  position: relative;
+  width: var(--logo-size);
+  height: var(--logo-size);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0a0a0a;
+  border-radius: calc(var(--logo-size) * 0.22);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+  flex-shrink: 0;
+}
+
+.cx-c,
+.cx-x {
+  font-family: var(--font-display, system-ui, sans-serif);
+  font-weight: 800;
+  color: #fff;
+  line-height: 1;
+  letter-spacing: -0.06em;
+}
+
+.cx-c {
+  font-size: calc(var(--logo-size) * 0.52);
+  margin-right: -2px;
+}
+
+.cx-x {
+  font-size: calc(var(--logo-size) * 0.48);
+  opacity: 0.92;
+  transform: translateY(1px);
+}
+
+.connex-wordmark {
+  font-family: var(--font-display, system-ui, sans-serif);
+  font-size: calc(var(--logo-size) * 0.42);
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: inherit;
+}
+
+.connex-logo--sidebar {
+  margin-bottom: var(--space-sm);
+}
+
+.auth-mobile-logo .connex-wordmark {
+  color: #0a0a0a;
+}
+
+.connex-logo--navbar .connex-wordmark {
+  letter-spacing: 0.12em;
+}

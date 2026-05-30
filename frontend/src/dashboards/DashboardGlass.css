@@ -1,0 +1,156 @@
+/* Full page layout */
+.dashboard-container {
+  padding: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+*{
+    color: black;
+}
+/* Glass card */
+.glass-card {
+  width: 85%;
+  padding: 25px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.12);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+}
+
+/* Title */
+.dashboard-title {
+  margin-bottom: 20px;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+/* Map box spacing */
+.map-wrapper {
+  margin-top: 20px;
+  border-radius: 15px;
+  overflow: hidden;
+}
+.main-dashboard {
+  display: flex;
+  height: 100vh;
+  backdrop-filter: blur(10px);
+}
+
+.glass-panel {
+  width: 350px;
+  padding: 25px;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(25px);
+  border-radius: 20px;
+  margin: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  color: #111;
+}
+
+.title {
+  text-align: center;
+  font-size: 26px;
+  margin-bottom: 20px;
+}
+
+.info-card {
+  background: rgba(255, 255, 255, 0.10);
+  padding: 15px;
+  border-radius: 15px;
+  margin-bottom: 20px;
+  color: #111;
+}
+
+.glass-btn {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  border: none;
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.2);
+  color: #111;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.glass-btn:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.primary-btn {
+  width: 100%;
+  padding: 12px;
+  background: #1f75ff;
+  border: none;
+  border-radius: 12px;
+  color: white;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.primary-btn:hover {
+  background: #0e5bd9;
+}
+
+.map-section {
+  flex: 1;
+  margin: 20px;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.25);
+}
+/* CENTER SCREEN */
+.dash-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-top: 70px;
+}
+
+/* PREMIUM GLASS CARD */
+.glass-box {
+  width: 80%;
+  max-width: 950px;
+  padding: 40px;
+  border-radius: 25px;
+
+  background: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+
+  border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+/* TITLE */
+.dash-title {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 700;
+  color: #222;
+  text-align: center;
+}
+
+/* SUB TEXT */
+.dash-sub {
+  margin-top: 8px;
+  font-size: 18px;
+  text-align: center;
+  color: #444;
+}
+
+/* MAP BOX SIZE */
+.map-wrapper {
+  margin-top: 35px;
+  height: 350px;
+  border-radius: 20px;
+  overflow: hidden;
+
+  background: rgba(255, 255, 255, 0.35);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}

@@ -1,0 +1,21 @@
+.staff-job-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-lg);
+}
+
+.nav-link-btn {
+  display: inline-flex;
+  margin: var(--space-md) 0;
+  text-decoration: none;
+}
+
+.gps-hint {
+  margin-top: var(--space-sm);
+}
+
+@media (max-width: 900px) {
+  .staff-job-grid {
+    grid-template-columns: 1fr;
+  }
+}

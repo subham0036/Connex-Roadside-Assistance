@@ -1,0 +1,66 @@
+.location-picker-map {
+  border: 2px solid var(--bg-dark);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: #f5f5f5;
+}
+
+.location-picker-map.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.location-picker-hint {
+  padding: 10px 14px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  background: #fafafa;
+  border-bottom: 1px solid var(--border-subtle);
+  margin: 0;
+}
+
+.location-picker-leaflet {
+  width: 100%;
+  height: calc(100% - 40px);
+  min-height: 260px;
+}
+
+.pick-marker-dot {
+  width: 22px;
+  height: 22px;
+  background: #0a0a0a;
+  border: 3px solid #fff;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+.location-mode-tabs {
+  display: flex;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.location-mode-tab {
+  flex: 1;
+  padding: 12px;
+  border: 2px solid var(--border-subtle);
+  background: #fff;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+
+.location-mode-tab.active {
+  border-color: var(--bg-dark);
+  background: var(--bg-dark);
+  color: #fff;
+}
+
+.manual-address-field {
+  margin-top: 12px;
+}

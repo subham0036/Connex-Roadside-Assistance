@@ -1,0 +1,60 @@
+.requestFormContainer {
+  max-width: 450px;
+  margin: 40px auto;
+  padding: 20px;
+  text-align: center;
+  color: #111;
+}
+
+.requestFormContainer h2 {
+  margin-bottom: 20px;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.glassForm {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 25px;
+  border-radius: 18px;
+
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(15px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.glassForm input,
+.glassForm select,
+.glassForm textarea {
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  outline: none;
+
+  background: rgba(255, 255, 255, 0.92);
+  color: #111;
+}
+
+.glassForm input::placeholder,
+.glassForm textarea::placeholder {
+  color: #8b8b8b;
+}
+
+.submitBtn {
+  padding: 12px;
+  background: #0d6efd;
+  border: none;
+  color: white;
+  border-radius: 10px;
+  cursor: pointer;
+  margin-top: 10px;
+  font-size: 16px;
+  transition: 0.3s;
+}
+
+.submitBtn:hover {
+  background: #0056d2;
+}
