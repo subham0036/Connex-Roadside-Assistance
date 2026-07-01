@@ -40,20 +40,32 @@ export default function Sidebar() {
     ];
   }
 
+  const handleExit = () => {
+    localStorage.removeItem("connex_token");
+    localStorage.removeItem("connex_role");
+    localStorage.removeItem("connex_user");
+    window.location.href = "/login";
+  };
+
   return (
     <nav className="sidebar">
-      <ConnexLogo size={40} className="connex-logo--sidebar" />
-      <p className="sidebar-role">{role}</p>
-      {links.map((link) => (
-        <NavLink
-          key={link.to}
-          to={link.to}
-          end={link.end}
-        >
-          {link.label}
-          {link.badge ? <span className="sidebar-badge">{link.badge}</span> : null}
-        </NavLink>
-      ))}
+      <div className="sidebar-top">
+        <ConnexLogo size={40} className="connex-logo--sidebar" />
+        <p className="sidebar-role">{role}</p>
+      </div>
+      
+      <div className="sidebar-links">
+        {links.map((link) => (
+          <NavLink
+            key={link.to}
+            to={link.to}
+            end={link.end}
+          >
+            {link.label}
+            {link.badge ? <span className="sidebar-badge">{link.badge}</span> : null}
+          </NavLink>
+        ))}
+      </div>
       {role === "admin" && (
         <p className="sidebar-hint">
           All platform data lives here — customers, garages, jobs, and commission. No need to open MongoDB for daily use.
@@ -69,6 +81,15 @@ export default function Sidebar() {
           Customer map, Google Maps navigate, then mark Complete when repair is done.
         </p>
       )}
+      
+      <button 
+        className="sidebar-exit-btn" 
+        onClick={handleExit}
+        title="Sign out"
+        aria-label="Exit or sign out"
+      >
+        ⏻
+      </button>
     </nav>
   );
 }

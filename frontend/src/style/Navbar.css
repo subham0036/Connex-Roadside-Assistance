@@ -84,6 +84,14 @@
 @media (max-width: 900px) {
   .navbar {
     padding: 0 var(--space-md);
+    padding-bottom: 60px;
+  }
+
+  .nav-tag {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
   }
 
   .nav-user {

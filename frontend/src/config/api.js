@@ -7,7 +7,7 @@ const api = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
-const AUTH_PATHS = ["/api/auth/login", "/api/auth/otp/send", "/api/auth/otp/verify", "/api/auth/signup"];
+const AUTH_PATHS = ["/api/auth/login", "/api/auth/firebase-login", "/api/auth/signup"];
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("connex_token");

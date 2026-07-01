@@ -255,10 +255,32 @@
 }
 
 .otp-input-single {
+  width: 100%;
+  min-height: 56px;
+  padding: 0 16px;
   text-align: center;
-  letter-spacing: 0.35em;
-  font-size: 1.25rem !important;
-  font-weight: 600;
+  letter-spacing: 0.4em;
+  font-size: 1.4rem !important;
+  font-weight: 700;
+  border: 2px solid #e5e5e5;
+  border-radius: 10px;
+  background: #fff;
+  color: #0a0a0a;
+  font-family: 'Courier New', monospace;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.otp-input-single:focus {
+  outline: none;
+  border-color: #0a0a0a;
+  box-shadow: 0 0 0 3px rgba(10, 10, 10, 0.1);
+}
+
+.otp-input-single:disabled {
+  background: #f5f5f5;
+  color: #999;
+  cursor: not-allowed;
 }
 
 .login-pro-error {

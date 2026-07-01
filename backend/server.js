@@ -35,7 +35,7 @@ app.listen(port, () => {
   console.log(`✓ Server running on http://localhost:${port}`);
   console.log(`✓ MongoDB: ${process.env.MONGO_URI ? "Configured" : "Not set"}`);
   console.log(`✓ JWT Secret: ${process.env.JWT_SECRET ? "Configured" : "Using default"}`);
-  const sms = process.env.FAST2SMS_API_KEY ? "Fast2SMS key set" : "no SMS key";
+  const sms = process.env.TWILIO_ACCOUNT_SID ? "Twilio ready" : "no SMS configured";
   const otpScreen = process.env.CONNEX_OTP_IN_RESPONSE === "true" ? "OTP shown on login when SMS fails" : "OTP in API only if SMS fails (dev)";
   console.log(`✓ OTP: ${sms} · ${otpScreen}`);
 }).on("error", (err) => {

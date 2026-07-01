@@ -1,15 +1,31 @@
 const https = require("https");
 
-function postFast2Sms(apiKey, params) {
+// Twilio OTP API (free tier: $15 test credit, works globally + India)
+const TWILIO_HOST = "api.twilio.com";
+
+function getTwilioAuth() {
+  const accountSid = process.env.TWILIO_ACCOUNT_SID;
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
+  const fromPhone = process.env.TWILIO_PHONE_NUMBER;
+
+  if (!accountSid || !authToken || !fromPhone) {
+    return null;
+  }
+  return { accountSid, authToken, fromPhone };
+}
+
+function postTwilio(accountSid, authToken, params) {
   const body = new URLSearchParams(params).toString();
+  const auth = Buffer.from(`${accountSid}:${authToken}`).toString("base64");
+
   return new Promise((resolve) => {
     const req = https.request(
       {
-        hostname: "www.fast2sms.com",
-        path: "/dev/bulkV3",  // Changed from bulkV2 to V3
+        hostname: TWILIO_HOST,
+        path: `/2010-04-01/Accounts/${accountSid}/Messages.json`,
         method: "POST",
         headers: {
-          authorization: apiKey,
+          Authorization: `Basic ${auth}`,
           "Content-Type": "application/x-www-form-urlencoded",
           "Content-Length": Buffer.byteLength(body),
         },
@@ -26,103 +42,89 @@ function postFast2Sms(apiKey, params) {
           } catch {
             parsed = { raw: data };
           }
-          
-          // Check if response indicates success
-          let ok = false;
-          if (res.statusCode >= 200 && res.statusCode < 300) {
-            // Fast2SMS success responses have return: true or status_code in [200, 201, 202]
-            ok = parsed?.return === true || 
-                 parsed?.status === true || 
-                 parsed?.status_code === 200 ||
-                 parsed?.status_code === 201 ||
-                 (parsed?.return !== false && parsed?.status_code !== 999 && parsed?.status_code !== 996);
-          }
-          
+
+          const ok = res.statusCode === 201 && parsed?.sid;
+
           resolve({
             sent: ok,
-            provider: "fast2sms",
+            provider: "twilio",
             statusCode: res.statusCode,
             raw: parsed,
           });
         });
       }
     );
-    req.on("error", (err) => resolve({ sent: false, provider: "fast2sms", error: err.message }));
+
+    req.on("error", (err) =>
+      resolve({ sent: false, provider: "twilio", error: err.message })
+    );
+
     req.write(body);
     req.end();
   });
 }
 
-async function sendViaFast2Sms(phone10, code) {
-  const apiKey = process.env.FAST2SMS_API_KEY;
-  if (!apiKey) return { sent: false, provider: null, reason: "no_api_key" };
+async function sendViaTwilio(phone10, code) {
+  const auth = getTwilioAuth();
+  if (!auth) {
+    console.warn(
+      "[Connex SMS] ⚠️ Twilio credentials missing. Set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER"
+    );
+    return { sent: false, provider: null, reason: "no_twilio_creds" };
+  }
 
   const message = `Your Connex OTP is ${code}. Valid for 5 minutes. Do not share.`;
+  const toPhone = `+91${phone10}`;
 
-  // Try 1: Standard OTP route with all parameters
-  let result = await postFast2Sms(apiKey, {
-    route: "otp",
-    variables_values: code,
-    numbers: phone10,
-    message: message,
+  console.log(`[Connex SMS] Sending OTP to ${toPhone} via Twilio...`);
+  const result = await postTwilio(auth.accountSid, auth.authToken, {
+    From: auth.fromPhone,
+    To: toPhone,
+    Body: message,
   });
 
-  console.log("[Connex SMS] OTP route attempt 1:", JSON.stringify(result, null, 2));
-
-  // Try 2: If OTP route fails, try quick/general SMS route
-  if (!result.sent) {
-    console.log("[Connex SMS] OTP route failed, trying quick/general SMS route...");
-    result = await postFast2Sms(apiKey, {
-      route: "q",
-      message: message,
-      numbers: phone10,
-    });
-    console.log("[Connex SMS] Quick SMS route attempt 2:", JSON.stringify(result, null, 2));
-  }
-
-  // Try 3: If still failing, try with Flash SMS
-  if (!result.sent) {
-    console.log("[Connex SMS] Quick route failed, trying flash SMS...");
-    result = await postFast2Sms(apiKey, {
-      route: "q",
-      message: message,
-      numbers: phone10,
-      flash: 0,
-    });
-    console.log("[Connex SMS] Flash SMS attempt 3:", JSON.stringify(result, null, 2));
-  }
-
-  // Check for specific error codes
-  if (!result.sent && result.raw?.status_code === 999) {
-    result.reason = "fast2sms_wallet";
-    console.warn(
-      "[Connex SMS] ⚠️  ERROR 999: Fast2SMS wallet LOW! Needs ₹100+ top-up. Check: https://www.fast2sms.com/dashboard"
-    );
-  }
-
-  if (!result.sent && result.raw?.status_code === 414) {
-    result.reason = "ip_blocked";
-    console.error(
-      "[Connex SMS] ❌ ERROR 414: IP is blacklisted. Need to whitelist IP in Fast2SMS dashboard."
-    );
-  }
+  console.log("[Connex SMS] Twilio response:", JSON.stringify(result, null, 2));
 
   if (!result.sent) {
-    console.warn(`[Connex SMS] ❌ SMS to +91${phone10} failed after all attempts. Code: ${code}`);
-    console.warn(`[Connex SMS] Error reason:`, result.reason || "unknown");
+    if (result.raw?.code === 21211) {
+      result.reason = "invalid_phone";
+      console.error("[Connex SMS] ❌ Invalid phone number format");
+    } else if (result.raw?.code === 20003) {
+      result.reason = "invalid_credentials";
+      console.error("[Connex SMS] ❌ Invalid Twilio credentials");
+    } else if (result.raw?.code === 21608) {
+      result.reason = "phone_not_allowed";
+      console.error(
+        "[Connex SMS] ❌ Phone number not in verified list. Add to Twilio dashboard."
+      );
+    } else if (result.raw?.error_code) {
+      result.reason = "twilio_error";
+      console.error(
+        `[Connex SMS] ❌ Twilio error: ${result.raw.error_message || result.raw.message}`
+      );
+    }
+    console.warn(`[Connex SMS] ❌ SMS to ${toPhone} failed. Code: ${code}`);
   } else {
-    console.log(`[Connex SMS] ✅ SMS sent to +91${phone10}`);
+    console.log(
+      `[Connex SMS] ✅ OTP sent to ${toPhone} (SID: ${result.raw.sid})`
+    );
   }
 
   return result;
 }
 
 async function sendOtpSms(phone10, code) {
-  const fast = await sendViaFast2Sms(phone10, code);
-  if (fast.sent) return fast;
+  const result = await sendViaTwilio(phone10, code);
+  if (result.sent) return result;
 
-  console.log(`[Connex OTP] +91${phone10} => ${code} (copy from login screen if SMS did not arrive)`);
-  return { sent: false, provider: fast.provider, reason: fast.reason || "sms_failed" };
+  console.log(
+    `[Connex OTP] +91${phone10} => ${code} (copy from login screen if SMS did not arrive)`
+  );
+  return {
+    sent: false,
+    provider: result.provider,
+    reason: result.reason || "sms_failed",
+  };
 }
 
 module.exports = { sendOtpSms };

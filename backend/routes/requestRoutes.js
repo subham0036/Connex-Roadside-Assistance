@@ -9,6 +9,7 @@ router.get("/mine", auth, requestController.getRequests);
 router.get("/all", auth, requireRole("admin"), requestController.getRequests);
 router.post("/:id/assign", auth, requireRole("mechanic"), requestController.assignStaff);
 router.post("/:id/complete", auth, requestController.completeRequest);
+router.post("/:id/settle-commission", auth, requireRole("mechanic", "admin"), requestController.settleCommission);
 router.post("/:id/status", auth, requestController.updateStatus);
 
 module.exports = router;

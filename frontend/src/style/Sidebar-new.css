@@ -41,6 +41,7 @@
   color: var(--text-muted);
   font-family: var(--font-mono);
 }
+
 .sidebar a {
   display: flex;
   align-items: center;
@@ -91,6 +92,27 @@
   border-radius: var(--radius-sm);
 }
 
+.sidebar-exit-btn {
+  display: none;
+  margin-top: var(--space-md);
+  padding: 10px;
+  width: 100%;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.sidebar-exit-btn:hover {
+  background: #f1f5f9;
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 @media (max-width: 900px) {
   .sidebar {
     position: fixed;
@@ -103,8 +125,9 @@
     max-height: none;
     border-right: none;
     border-top: 1px solid var(--border-subtle);
-    display: flex;
+    flex-direction: row;
     flex-wrap: nowrap;
+    align-items: center;
     overflow-x: auto;
     gap: 0;
     padding: 6px 8px;
@@ -112,27 +135,47 @@
     -webkit-overflow-scrolling: touch;
   }
 
+  .sidebar-top {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 0;
+    flex: 0 0 auto;
+  }
+
   .connex-logo--sidebar {
     display: block !important;
-    flex: 0 0 auto;
-    padding: 8px;
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  .sidebar-role {
+    display: none;
+  }
+
+  .sidebar-links {
+    flex: 1;
+    flex-direction: row;
+    gap: 0;
+    margin: 0 auto;
   }
 
   .sidebar h3,
-  .sidebar-role,
   .sidebar-hint,
   .sidebar-divider {
     display: none;
   }
 
   .sidebar a {
-    flex: 1 0 auto;
+    flex: 1;
     text-align: center;
     margin: 0;
     padding: 8px 12px;
     font-size: 0.75rem;
     white-space: nowrap;
     border: none;
+    justify-content: center;
+    flex-direction: column;
   }
 
   .sidebar a:hover,
@@ -146,16 +189,21 @@
     display: none;
   }
 
-  .sidebar::after {
-    content: "✕";
+  .sidebar-exit-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     flex: 0 0 auto;
-    padding: 8px 12px;
-    font-size: 1rem;
-    color: var(--text-muted);
-    cursor: pointer;
-    text-align: center;
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-sm);
-    margin-left: auto;
+    margin: 0;
+    padding: 8px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    font-size: 1.2rem;
+    background: #f1f5f9;
+  }
+
+  .sidebar-exit-btn:hover {
+    background: #e2e8f0;
   }
 }

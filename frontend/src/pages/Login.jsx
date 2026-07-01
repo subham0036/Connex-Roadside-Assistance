@@ -7,14 +7,11 @@ import "./Login.css";
 
 export default function Login() {
   const navigate = useNavigate();
-  const [mode, setMode] = useState("phone");
-  const [phone, setPhone] = useState("");
+  const [emailInput, setEmailInput] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [otpHint, setOtpHint] = useState("");
-  const [onScreenOtp, setOnScreenOtp] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -38,75 +35,91 @@ export default function Login() {
 
   const sendOtp = async (e) => {
     if (e?.preventDefault) e.preventDefault();
-    const digits = phone.replace(/\D/g, "").slice(-10);
-    if (digits.length !== 10) {
-      setError("Enter a valid 10-digit mobile number.");
+    
+    if (!emailInput.includes("@")) {
+      setError("Enter a valid email address.");
+      return;
+    }
+    
+    setLoading(true);
+    setError("");
+    setOtpHint("");
+    
+    try {
+      console.log("[Email OTP] Sending to", emailInput);
+      
+      const res = await api.post("/api/auth/email-otp/send", { email: emailInput });
+      
+      setEmail(emailInput);
+      setOtpSent(true);
+      setOtpHint(res.data.msg || "✓ OTP sent to your email");
+      
+      if (res.data.otpForTesting) {
+        console.log("[Email OTP - Dev]", res.data.otpForTesting);
+      }
+    } catch (err) {
+      console.error("[Email OTP Send Error]", err.response?.data || err.message);
+      setError(err.response?.data?.msg || "Could not send OTP. Try again in a moment.");
+    }
+    setLoading(false);
+  };
+
+  const handleOtpChange = (e) => {
+    const value = e.target.value.replace(/\D/g, "").slice(0, 6);
+    setOtp(value);
+    
+    // Auto-submit when 6 digits are entered
+    if (value.length === 6) {
+      setTimeout(() => {
+        handleVerifyOtp(value);
+      }, 300);
+    }
+  };
+
+  const handleOtpPaste = (e) => {
+    e.preventDefault();
+    const pastedText = e.clipboardData?.getData("text") || "";
+    const digits = pastedText.replace(/\D/g, "").slice(0, 6);
+    setOtp(digits);
+    
+    // Auto-submit if we got 6 digits
+    if (digits.length === 6) {
+      setTimeout(() => {
+        handleVerifyOtp(digits);
+      }, 300);
+    }
+  };
+
+  const handleVerifyOtp = async (otpCode) => {
+    if (!otpCode || otpCode.length !== 6) {
+      setError("Enter the full 6-digit code.");
       return;
     }
     setLoading(true);
     setError("");
-    setOtpHint("");
-    setOnScreenOtp("");
     try {
-      const res = await api.post("/api/auth/otp/send", { identifier: digits });
-      setOtpSent(true);
-      const code = res.data.otpForTesting ? String(res.data.otpForTesting) : "";
-      if (code) {
-        setOnScreenOtp(code);
-        setOtp(code);
-      } else {
-        setOtp("");
-      }
-      if (res.data.smsSent) {
-        setOtpHint("Check your SMS inbox for the 6-digit code.");
-      } else if (code) {
-        setOtpHint("SMS is not active yet — use the code below (also printed in the backend terminal).");
-      } else {
-        setOtpHint("Could not send SMS. Check backend terminal for your code or set CONNEX_OTP_IN_RESPONSE=true.");
-      }
+      console.log("[Email OTP Verify]", otpCode);
+      
+      const res = await api.post("/api/auth/email-otp/verify", {
+        email: email,
+        otp: otpCode,
+      });
+      
+      finishLogin(res.data);
     } catch (err) {
-      setError(err.response?.data?.msg || "Could not send OTP.");
+      console.error("[Email OTP Verify Error]", err.response?.data || err.message);
+      if (err.response?.data?.msg) {
+        setError(err.response.data.msg);
+      } else {
+        setError("Invalid OTP. Check your email or request a new one.");
+      }
     }
     setLoading(false);
   };
 
   const verifyOtp = async (e) => {
     e.preventDefault();
-    const digits = phone.replace(/\D/g, "").slice(-10);
-    setLoading(true);
-    setError("");
-    try {
-      const res = await api.post("/api/auth/otp/verify", {
-        identifier: digits,
-        otp: otp.trim(),
-      });
-      finishLogin(res.data);
-    } catch (err) {
-      setError(err.response?.data?.msg || "Invalid OTP.");
-    }
-    setLoading(false);
-  };
-
-  const loginWithEmail = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-    try {
-      const res = await api.post("/api/auth/login", { email: email.trim(), password });
-      finishLogin(res.data);
-    } catch (err) {
-      setError(err.response?.data?.msg || "Invalid email or password.");
-    }
-    setLoading(false);
-  };
-
-  const switchMode = (next) => {
-    setMode(next);
-    setError("");
-    setOtpSent(false);
-    setOtp("");
-    setOtpHint("");
-    setOnScreenOtp("");
+    await handleVerifyOtp(otp);
   };
 
   return (
@@ -115,87 +128,47 @@ export default function Login() {
       subtitle="Broken down? Book a nearby garage, pay a visit fee, and track your mechanic — like ride-hailing, for repairs."
       footer={<AuthLandingLinks />}
     >
-      <h2 className="auth-panel-title">Sign in</h2>
+      <h2 className="auth-panel-title">Sign in with Email</h2>
 
-      <div className="login-mode-tabs" role="tablist">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={mode === "phone"}
-          className={mode === "phone" ? "active" : ""}
-          onClick={() => switchMode("phone")}
-        >
-          Mobile
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={mode === "email"}
-          className={mode === "email" ? "active" : ""}
-          onClick={() => switchMode("email")}
-        >
-          Email
-        </button>
-      </div>
-
-      {mode === "phone" && !otpSent && (
+      {!otpSent && (
         <form className="login-pro-form" onSubmit={sendOtp}>
-          <label className="login-pro-label">Mobile number</label>
-          <div className="phone-input-row">
-            <span className="phone-prefix">+91</span>
-            <input
-              type="tel"
-              inputMode="numeric"
-              maxLength={10}
-              value={phone}
-              onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
-              placeholder="9876543210"
-              autoComplete="tel"
-              required
-              disabled={loading}
-            />
-          </div>
+          <label className="login-pro-label">Email address</label>
+          <input
+            type="email"
+            value={emailInput}
+            onChange={(e) => setEmailInput(e.target.value)}
+            placeholder="your@email.com"
+            autoComplete="email"
+            required
+            disabled={loading}
+          />
           {error && <p className="login-pro-error">{error}</p>}
-          <button type="submit" className="login-pro-cta" disabled={loading || phone.length < 10}>
-            {loading ? "Sending…" : "Continue"}
+          <button type="submit" className="login-pro-cta" disabled={loading || !emailInput.includes("@")}>
+            {loading ? "Sending OTP…" : "Send OTP"}
           </button>
         </form>
       )}
 
-      {mode === "phone" && otpSent && (
+      {otpSent && (
         <form className="login-pro-form" onSubmit={verifyOtp}>
           <p className="login-pro-otp-sent">
-            Code for <strong>+91 {phone.replace(/\D/g, "").slice(-10)}</strong>
+            OTP sent to <strong>{email}</strong>
           </p>
           {otpHint && <p className="login-pro-hint">{otpHint}</p>}
-          {onScreenOtp && (
-            <div className="otp-on-screen" role="status">
-              <span className="otp-on-screen-label">Your login code</span>
-              <strong className="otp-on-screen-code">{onScreenOtp}</strong>
-              <button
-                type="button"
-                className="login-pro-link"
-                onClick={() => {
-                  navigator.clipboard?.writeText(onScreenOtp);
-                  setOtpHint("Code copied. Paste it below if needed.");
-                }}
-              >
-                Copy code
-              </button>
-            </div>
-          )}
-          <label className="login-pro-label">6-digit code</label>
+          <label className="login-pro-label">6-digit code from email</label>
           <input
             className="otp-input-single"
             type="text"
             inputMode="numeric"
             maxLength={6}
             value={otp}
-            onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+            onChange={handleOtpChange}
+            onPaste={handleOtpPaste}
             placeholder="• • • • • •"
             autoComplete="one-time-code"
             required
             disabled={loading}
+            spellCheck="false"
           />
           {error && <p className="login-pro-error">{error}</p>}
           <button type="submit" className="login-pro-cta" disabled={loading || otp.length < 6}>
@@ -211,49 +184,18 @@ export default function Login() {
               setOtpSent(false);
               setError("");
               setOtpHint("");
-              setOnScreenOtp("");
               setOtp("");
             }}
           >
-            Change number
-          </button>
-        </form>
-      )}
-
-      {mode === "email" && (
-        <form className="login-pro-form" onSubmit={loginWithEmail}>
-          <label className="login-pro-label">Email</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="owner@garage.com"
-            autoComplete="email"
-            required
-            disabled={loading}
-          />
-          <label className="login-pro-label">Password</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Your password"
-            autoComplete="current-password"
-            required
-            disabled={loading}
-          />
-              <p className="login-pro-hint">Garage owners & field mechanics use email + password.</p>
-          {error && <p className="login-pro-error">{error}</p>}
-          <button type="submit" className="login-pro-cta" disabled={loading}>
-            {loading ? "Signing in…" : "Sign in"}
+            Change email
           </button>
         </form>
       )}
 
       <p className="staff-login-promo">
-        Field mechanic?{" "}
-        <Link to="/staff/login">Open staff sign-in</Link>
-        {" "}— use the email & password from your garage owner.
+        Garage owner or staff?{" "}
+        <Link to="/staff/login">Use email & password</Link>
+        {" "}— for garage owner accounts.
       </p>
     </AuthLanding>
   );

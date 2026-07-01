@@ -214,6 +214,7 @@ exports.completeRequest = async (req, res) => {
     }
     request.platformCommission = ServiceRequest.calcCommission(request.fixedFee, request.repairAmount);
     request.status = "completed";
+    request.commissionSettled = false;
     await request.save();
 
     const total = request.fixedFee + request.repairAmount;
@@ -223,6 +224,36 @@ exports.completeRequest = async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ msg: "Could not complete request.", error: err.message });
+  }
+};
+
+exports.settleCommission = async (req, res) => {
+  try {
+    const { settlementReference } = req.body;
+    const request = await ServiceRequest.findById(req.params.id);
+    if (!request) return res.status(404).json({ msg: "Request not found." });
+
+    if (request.status !== "completed") {
+      return res.status(400).json({ msg: "Commission can only be settled after the job is completed." });
+    }
+
+    const owns = req.user.role === "admin" || (req.user.role === "mechanic" && (await userOwnsRequestGarage(req.user.id, request)));
+    if (!owns) {
+      return res.status(403).json({ msg: "Not allowed to settle commission for this request." });
+    }
+
+    if (request.commissionSettled) {
+      return res.status(400).json({ msg: "Commission is already marked as settled." });
+    }
+
+    request.commissionSettled = true;
+    request.commissionSettlementReference = settlementReference || request.commissionSettlementReference;
+    request.commissionSettledAt = new Date();
+    await request.save();
+
+    res.json({ msg: "Commission marked settled for this job.", request });
+  } catch (err) {
+    res.status(500).json({ msg: "Could not settle commission.", error: err.message });
   }
 };
 

@@ -20,11 +20,11 @@ import "./App.css";
 export default function App() {
   return (
     <ErrorBoundary>
-    <BrowserRouter>
-      <Routes>
-        <Route element={<AppLayout />}>
-          <Route path="/" element={<Navigate to="/login" replace />} />
-          <Route path="/login" element={<Login />} />
+      <BrowserRouter>
+        <Routes>
+          <Route element={<AppLayout />}>
+            <Route path="/" element={<Navigate to="/login" replace />} />
+            <Route path="/login" element={<Login />} />
           <Route path="/staff/login" element={<StaffLogin />} />
           <Route path="/login/staff" element={<StaffLogin />} />
           <Route path="/signup/customer" element={<SignupCustomer />} />

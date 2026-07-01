@@ -27,6 +27,9 @@ const serviceRequestSchema = new mongoose.Schema(
     repairAmount: { type: Number, default: 0 },
     repairPaymentMethod: { type: String, enum: ["UPI", "Cash", "Card"] },
     platformCommission: { type: Number, default: 0 },
+    commissionSettled: { type: Boolean, default: false },
+    commissionSettlementReference: String,
+    commissionSettledAt: Date,
     paymentMethod: {
       type: String,
       enum: ["UPI", "Cash", "Card"],

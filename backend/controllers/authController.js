@@ -4,6 +4,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { normalizeIdentifier, userFilterFromIdentifier } = require("../utils/identifier");
 const { sendOtpSms } = require("../utils/sms");
+const { sendOtpEmail } = require("../utils/email");
 const { normalizePhone10 } = require("../utils/phone");
 
 function shouldExposeOtpInResponse(smsSent) {
@@ -94,7 +95,7 @@ exports.signup = async (req, res) => {
   }
 };
 
-// Login
+
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -234,6 +235,161 @@ exports.verifyOtp = async (req, res) => {
       user: userPayload(user),
     });
   } catch (err) {
+    res.status(500).json({ msg: "OTP verification failed.", error: err.message });
+  }
+};
+
+// Firebase Phone Auth Login
+exports.firebaseLogin = async (req, res) => {
+  try {
+    const { idToken, phone } = req.body;
+    
+    if (!idToken || !phone) {
+      return res.status(400).json({ msg: "Firebase ID token and phone number are required." });
+    }
+
+    const phone10 = normalizePhone10(phone);
+    if (!phone10) {
+      return res.status(400).json({ msg: "Invalid phone number from Firebase." });
+    }
+
+    // Find or create user
+    let user = await User.findOne({
+      $or: [
+        { phone: phone10 },
+        { phone: `+91${phone10}` },
+        { phone: `91${phone10}` },
+      ],
+    });
+
+    if (!user) {
+      // First time login — create customer account
+      user = await User.create({
+        name: `Customer ${phone10.slice(-4)}`,
+        email: `customer_${phone10}@connex.local`,
+        password: "firebase_phone_auth",
+        phone: phone10,
+        role: "customer",
+        address: "",
+      });
+      console.log(`[Firebase Auth] Created new customer: ${phone10}`);
+    } else if (user.role !== "customer") {
+      return res.status(400).json({
+        msg: "Phone number registered as garage owner or staff. Use email + password on Email tab.",
+      });
+    }
+
+    const token = createToken(user);
+    res.json({
+      msg: "Login successful!",
+      token,
+      role: user.role,
+      user: userPayload(user),
+    });
+  } catch (err) {
+    console.error("[Firebase Auth Error]", err);
+    res.status(500).json({ msg: "Firebase login failed.", error: err.message });
+  }
+};
+
+// Email OTP - Send
+exports.sendEmailOtp = async (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    if (!email || !email.includes("@")) {
+      return res.status(400).json({ msg: "Valid email is required." });
+    }
+
+    // Generate 6-digit OTP
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    const key = `email:${email.toLowerCase()}`;
+
+    // Delete old OTPs for this email
+    await Otp.deleteMany({ identifier: key });
+
+    // Create new OTP (expires in 5 minutes)
+    await Otp.create({
+      identifier: key,
+      code,
+      expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+    });
+
+    // Send email
+    const emailResult = await sendOtpEmail(email, code);
+
+    if (emailResult.sent) {
+      res.json({
+        msg: "✓ OTP sent to " + email,
+        success: true,
+      });
+    } else {
+      res.json({
+        msg: "Could not send email. Try again in a moment.",
+        success: false,
+        otpForTesting: code, // For development
+      });
+    }
+  } catch (err) {
+    console.error("[Send Email OTP Error]", err);
+    res.status(500).json({ msg: "Could not send OTP.", error: err.message });
+  }
+};
+
+// Email OTP - Verify
+exports.verifyEmailOtp = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({ msg: "Email and OTP are required." });
+    }
+
+    const entered = String(otp).replace(/\D/g, "").trim();
+    if (entered.length !== 6) {
+      return res.status(400).json({ msg: "Enter the full 6-digit code." });
+    }
+
+    const key = `email:${email.toLowerCase()}`;
+    const record = await Otp.findOne({ identifier: key }).sort({ createdAt: -1 });
+
+    if (!record || record.code !== entered) {
+      return res.status(400).json({ msg: "Invalid OTP. Check your email or request a new one." });
+    }
+
+    if (record.expiresAt < new Date()) {
+      return res.status(400).json({ msg: "OTP expired. Request a new one." });
+    }
+
+    // Find or create user (for email-based accounts)
+    let user = await User.findOne({ email: email.toLowerCase() });
+
+    if (!user) {
+      // First time login via email — create customer account
+      const name = email.split("@")[0];
+      user = await User.create({
+        name: name.charAt(0).toUpperCase() + name.slice(1),
+        email: email.toLowerCase(),
+        password: "email_otp_auth_" + Date.now(), // Dummy password
+        phone: "",
+        role: "customer",
+        address: "",
+      });
+      console.log(`[Email OTP] Created new customer: ${email}`);
+    }
+
+    // Delete OTP after verification
+    await Otp.deleteMany({ identifier: key });
+
+    const token = createToken(user);
+    res.json({
+      msg: "✓ Login successful!",
+      token,
+      role: user.role,
+      user: userPayload(user),
+    });
+  } catch (err) {
+    console.error("[Verify Email OTP Error]", err);
     res.status(500).json({ msg: "OTP verification failed.", error: err.message });
   }
 };
