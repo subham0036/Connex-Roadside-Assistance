@@ -1,0 +1,52 @@
+{
+  "systemSetup": [],
+  "templateName": "custom",
+  "projectDependencies": [
+    {
+      "name": "Install Frontend Dependencies",
+      "command": "cd frontend && npm install"
+    },
+    {
+      "name": "Install Backend Dependencies",
+      "command": "cd backend && npm install"
+    }
+  ],
+  "codeChecks": [],
+  "buildSteps": [
+    {
+      "name": "Build Frontend",
+      "command": "cd frontend && npm run build"
+    }
+  ],
+  "runStep": [
+    {
+      "name": "Start Backend Server",
+      "command": "cd backend && npm start",
+      "port": "5001"
+    },
+    {
+      "name": "Start Frontend Dev Server",
+      "command": "cd frontend && npm start",
+      "port": "3000"
+    }
+  ],
+  "deploySteps": [],
+  "cleanupFiles": [
+    "frontend/node_modules",
+    "frontend/build",
+    "frontend/package-lock.json",
+    "backend/node_modules",
+    "backend/package-lock.json"
+  ],
+  "packageManager": "npm",
+  "envPaths": [
+    {
+      "name": "frontend",
+      "path": "frontend/.env"
+    },
+    {
+      "name": "backend",
+      "path": "backend/.env"
+    }
+  ]
+}
