@@ -20,8 +20,8 @@
   ],
   "runStep": [
     {
-      "name": "Start Backend Server",
-      "command": "cd backend && npm start",
+      "name": "Start Backend Dev Server",
+      "command": "cd backend && npm run dev",
       "port": "5001"
     },
     {
