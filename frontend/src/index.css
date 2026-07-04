@@ -32,12 +32,9 @@ a:hover {
 }
 
 .app-main {
-  margin-left: var(--sidebar-width);
-  padding: calc(var(--navbar-height) + var(--space-lg)) var(--space-lg) var(--space-xl);
   min-height: 100vh;
-  max-width: 1600px;
+  transition: 0.3s;
 }
-
 .auth-page {
   margin-left: 0;
   max-width: none;

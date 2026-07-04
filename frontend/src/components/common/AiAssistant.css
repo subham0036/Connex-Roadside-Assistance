@@ -85,14 +85,17 @@
   margin-top: var(--space-sm);
 }
 
-@media (max-width: 900px) {
+@media (max-width: 768px) {
   .ai-fab {
-    bottom: 80px;
+    bottom: calc(var(--mobile-nav-height) + 16px + env(safe-area-inset-bottom, 0px));
     right: 16px;
   }
 
   .ai-panel {
-    bottom: 148px;
+    bottom: calc(var(--mobile-nav-height) + 84px + env(safe-area-inset-bottom, 0px));
     right: 16px;
+    left: 16px;
+    width: auto;
+    max-width: none;
   }
 }

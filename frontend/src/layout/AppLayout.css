@@ -11,12 +11,12 @@
 .app-main {
   flex: 1;
   margin-left: var(--sidebar-width);
-  padding: var(--space-lg);
+  padding: calc(var(--navbar-height) + var(--space-md)) var(--space-lg) var(--space-lg);
   min-width: 0;
   max-width: 100%;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 768px) {
   .app-body {
     flex-direction: column;
     min-height: auto;
@@ -24,8 +24,8 @@
 
   .app-main {
     margin-left: 0;
-    padding: var(--space-md);
-    padding-top: var(--space-sm);
-    padding-bottom: calc(var(--space-xl) + 72px);
+    width: 100%;
+    padding: calc(var(--navbar-height) + var(--space-sm)) var(--space-md)
+             calc(var(--mobile-nav-height) + var(--space-lg) + env(safe-area-inset-bottom, 0px));
   }
 }

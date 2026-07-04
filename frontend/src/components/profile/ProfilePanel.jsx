@@ -86,6 +86,7 @@ export default function ProfilePanel({ open, onClose }) {
           </div>
         </div>
 
+        <div className="profile-body">
         {loading ? (
           <p className="panel-sub">Loading profile...</p>
         ) : (
@@ -129,6 +130,7 @@ export default function ProfilePanel({ open, onClose }) {
             )}
           </dl>
         )}
+        </div>
 
         <div className="profile-footer">
           <ConnexLogo size={24} />

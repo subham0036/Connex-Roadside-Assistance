@@ -6,7 +6,14 @@ import "./CustomerDashboard.css";
 
 export default function CustomerNewRequest() {
   const navigate = useNavigate();
-  const [details, setDetails] = useState({ name: "", phone: "", vehicleType: "", issue: "", locationNote: "" });
+  const [details, setDetails] = useState({
+    name: "",
+    phone: "",
+    vehicleType: "",
+    issue: "",
+    issueNote: "",
+    locationNote: "",
+  });
   const [location, setLocation] = useState({ lat: null, lng: null });
   const [locating, setLocating] = useState(false);
   const [garages, setGarages] = useState([]);
@@ -43,11 +50,14 @@ export default function CustomerNewRequest() {
     refreshLocation();
   }, [refreshLocation]);
 
+  const issueValid =
+    details.issue && (details.issue !== "Other" || details.issueNote.trim());
+
   const formValid =
     details.name.trim() &&
     details.phone.trim() &&
     details.vehicleType.trim() &&
-    details.issue &&
+    issueValid &&
     location.lat != null &&
     location.lng != null;
 
@@ -79,7 +89,10 @@ export default function CustomerNewRequest() {
     setMessage("");
     try {
       await api.post("/api/requests/create", {
-        issue: details.issue,
+        issue:
+          details.issue === "Other"
+            ? `Other: ${details.issueNote.trim()}`
+            : details.issue,
         vehicleType: details.vehicleType,
         phone: details.phone,
         note: details.locationNote,
@@ -151,7 +164,17 @@ export default function CustomerNewRequest() {
               </div>
               <div className="form-field">
                 <label>Problem</label>
-                <select value={details.issue} onChange={(e) => setDetails({ ...details, issue: e.target.value })}>
+                <select
+                  value={details.issue}
+                  onChange={(e) => {
+                    const issue = e.target.value;
+                    setDetails({
+                      ...details,
+                      issue,
+                      issueNote: issue === "Other" ? details.issueNote : "",
+                    });
+                  }}
+                >
                   <option value="">Select</option>
                   <option value="Flat Tyre">Flat Tyre</option>
                   <option value="Engine Failure">Engine Failure</option>
@@ -161,6 +184,18 @@ export default function CustomerNewRequest() {
                   <option value="Other">Other</option>
                 </select>
               </div>
+              {details.issue === "Other" && (
+                <div className="form-field issue-note-field">
+                  <label>Describe the problem</label>
+                  <textarea
+                    value={details.issueNote}
+                    onChange={(e) => setDetails({ ...details, issueNote: e.target.value })}
+                    placeholder="Tell us what happened to your vehicle..."
+                    rows={3}
+                    required
+                  />
+                </div>
+              )}
               <div className="form-field">
                 <label>Landmark</label>
                 <textarea

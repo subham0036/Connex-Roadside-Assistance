@@ -4,28 +4,77 @@ import api from "../config/api";
 import ConnexLogo from "../components/brand/ConnexLogo";
 import "../style/Sidebar.css";
 
+import {
+  ClipboardList,
+  Wrench,
+  Users,
+  MapPinned,
+  History,
+  LayoutDashboard,
+  LogOut,
+  PlusCircle,
+} from "lucide-react";
+
 const ROLE_LINKS = {
   mechanic: [
-    { to: "/garage", label: "Requests" },
-    { to: "/garage/staff", label: "Staff" },
-    { to: "/garage/setup", label: "Garage" },
+    {
+      to: "/garage",
+      label: "Requests",
+      icon: <ClipboardList size={22} />,
+    },
+    {
+      to: "/garage/staff",
+      label: "Staff",
+      icon: <Users size={22} />,
+    },
+    {
+      to: "/garage/setup",
+      label: "Garage",
+      icon: <Wrench size={22} />,
+    },
   ],
-  staff: [{ to: "/staff", label: "My job & map" }],
-  admin: [{ to: "/admin", label: "Admin Data" }],
+
+  staff: [
+    {
+      to: "/staff",
+      label: "My Job",
+      icon: <MapPinned size={22} />,
+    },
+  ],
+
+  admin: [
+    {
+      to: "/admin",
+      label: "Dashboard",
+      icon: <LayoutDashboard size={22} />,
+    },
+  ],
 };
 
 export default function Sidebar() {
   const role = localStorage.getItem("connex_role");
+
   const [completedCount, setCompletedCount] = useState(0);
   const [hasActive, setHasActive] = useState(false);
 
   useEffect(() => {
     if (role !== "customer") return;
-    api.get("/api/requests/mine")
+
+    api
+      .get("/api/requests/mine")
       .then((res) => {
         const list = res.data || [];
-        setCompletedCount(list.filter((r) => r.status === "completed").length);
-        setHasActive(list.some((r) => !["completed", "cancelled"].includes(r.status)));
+
+        setCompletedCount(
+          list.filter((r) => r.status === "completed").length
+        );
+
+        setHasActive(
+          list.some(
+            (r) =>
+              !["completed", "cancelled"].includes(r.status)
+          )
+        );
       })
       .catch(() => {});
   }, [role]);
@@ -34,13 +83,28 @@ export default function Sidebar() {
 
   if (role === "customer") {
     links = [
-      { to: "/customer", label: "New request", end: true },
-      { to: "/customer/active", label: "Active job", badge: hasActive ? "LIVE" : null },
-      { to: "/customer/completed", label: "Completed", badge: completedCount || null },
+      {
+        to: "/customer",
+        label: "Request",
+        icon: <PlusCircle size={22} />,
+        end: true,
+      },
+      {
+        to: "/customer/active",
+        label: "Active",
+        icon: <MapPinned size={22} />,
+        badge: hasActive ? "LIVE" : null,
+      },
+      {
+        to: "/customer/completed",
+        label: "History",
+        icon: <History size={22} />,
+        badge: completedCount || null,
+      },
     ];
   }
 
-  const handleExit = () => {
+  const logout = () => {
     localStorage.removeItem("connex_token");
     localStorage.removeItem("connex_role");
     localStorage.removeItem("connex_user");
@@ -48,48 +112,56 @@ export default function Sidebar() {
   };
 
   return (
-    <nav className="sidebar">
-      <div className="sidebar-top">
-        <ConnexLogo size={40} className="connex-logo--sidebar" />
-        <p className="sidebar-role">{role}</p>
+    <aside className="sidebar">
+      {/* Logo */}
+      <div className="sidebar-brand">
+        <ConnexLogo
+          size={36}
+          showWordmark={false}
+          className="sidebar-logo"
+        />
       </div>
-      
-      <div className="sidebar-links">
+
+      {/* Navigation */}
+      <nav className="sidebar-links">
         {links.map((link) => (
           <NavLink
             key={link.to}
             to={link.to}
             end={link.end}
+            className={({ isActive }) =>
+              isActive ? "sidebar-link active" : "sidebar-link"
+            }
           >
-            {link.label}
-            {link.badge ? <span className="sidebar-badge">{link.badge}</span> : null}
+            <span className="sidebar-icon">
+              {link.icon}
+            </span>
+
+            <span className="sidebar-text">
+              {link.label}
+            </span>
+
+            {link.badge && (
+              <span className="sidebar-badge">
+                {link.badge}
+              </span>
+            )}
           </NavLink>
         ))}
-      </div>
-      {role === "admin" && (
-        <p className="sidebar-hint">
-          All platform data lives here — customers, garages, jobs, and commission. No need to open MongoDB for daily use.
-        </p>
-      )}
-      {role === "mechanic" && (
-        <p className="sidebar-hint">
-          Assign staff from Requests. Staff sign in at /staff/login (link on Staff page).
-        </p>
-      )}
-      {role === "staff" && (
-        <p className="sidebar-hint">
-          Customer map, Google Maps navigate, then mark Complete when repair is done.
-        </p>
-      )}
-      
-      <button 
-        className="sidebar-exit-btn" 
-        onClick={handleExit}
+      </nav>
+
+      {/* Logout */}
+      <button
+        type="button"
+        className="sidebar-exit-btn"
+        onClick={logout}
         title="Sign out"
-        aria-label="Exit or sign out"
       >
-        ⏻
+        <span className="sidebar-icon">
+          <LogOut size={22} />
+        </span>
+        <span className="sidebar-text">Sign out</span>
       </button>
-    </nav>
+    </aside>
   );
 }

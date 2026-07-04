@@ -2,13 +2,22 @@ import React, { useState } from "react";
 
 export default function CustomerRequestForm({ onSubmit, location, disabled, previewOnly }) {
   const [problem, setProblem] = useState("");
+  const [otherNote, setOtherNote] = useState("");
   const [vehicle, setVehicle] = useState("");
   const [phone, setPhone] = useState("");
   const [note, setNote] = useState("");
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit({ issue: problem, vehicleType: vehicle, phone, note, location });
+    const issue =
+      problem === "Other" ? `Other: ${otherNote.trim()}` : problem;
+    onSubmit({ issue, vehicleType: vehicle, phone, note, location });
+  };
+
+  const handleProblemChange = (e) => {
+    const next = e.target.value;
+    setProblem(next);
+    if (next !== "Other") setOtherNote("");
   };
 
   return (
@@ -20,7 +29,7 @@ export default function CustomerRequestForm({ onSubmit, location, disabled, prev
 
       <form className="glass-form" onSubmit={handleSubmit}>
         <label>What happened?</label>
-        <select value={problem} onChange={(e) => setProblem(e.target.value)} required disabled={disabled}>
+        <select value={problem} onChange={handleProblemChange} required disabled={disabled}>
           <option value="">Select issue</option>
           <option value="Flat Tyre">Flat Tyre</option>
           <option value="Engine Failure">Engine Failure</option>
@@ -29,6 +38,19 @@ export default function CustomerRequestForm({ onSubmit, location, disabled, prev
           <option value="Fuel Empty">Fuel Empty</option>
           <option value="Other">Other</option>
         </select>
+
+        {problem === "Other" && (
+          <>
+            <label>Describe the problem</label>
+            <textarea
+              value={otherNote}
+              onChange={(e) => setOtherNote(e.target.value)}
+              placeholder="Tell us what happened to your vehicle..."
+              required
+              disabled={disabled}
+            />
+          </>
+        )}
 
         <label>Vehicle type</label>
         <input

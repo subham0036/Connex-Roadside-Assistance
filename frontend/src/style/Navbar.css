@@ -1,100 +1,206 @@
-.navbar {
-  position: sticky;
-  top: 0;
-  height: var(--navbar-height);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 var(--space-lg);
-  background: #ffffff;
-  border-bottom: 2px solid var(--bg-dark);
-  z-index: 1000;
+/* =====================================================
+                CONNEX PREMIUM NAVBAR
+===================================================== */
+
+.navbar{
+
+    position:fixed;
+
+    top:0;
+
+    left:var(--sidebar-width);
+
+    right:0;
+
+    height:var(--navbar-height);
+
+    background:#ffffff;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    padding:0 28px;
+
+    border-bottom:1px solid #ececec;
+
+    z-index:1000;
+
+    box-shadow:0 2px 10px rgba(0,0,0,.04);
 }
 
-.auth-top-logo-link {
-  text-decoration: none;
-  color: inherit;
+/* left — logo only on mobile; desktop brand lives in sidebar header */
+
+.connex-logo--navbar{
+    cursor:pointer;
 }
 
-.nav-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
+@media (min-width: 769px) {
+    .connex-logo--navbar {
+        display: none;
+    }
+
+    .navbar {
+        justify-content: flex-end;
+    }
 }
 
-.nav-tag {
-  display: none;
+/* right */
+
+.nav-actions{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:16px;
 }
 
-.nav-user {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  font-family: var(--font-mono);
+.nav-tag{
+
+    font-size:13px;
+
+    color:#777;
+
+    font-weight:500;
 }
 
-.nav-avatar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 4px 4px 4px 4px;
-  border: 2px solid var(--bg-dark);
-  border-radius: 999px;
-  background: #fff;
-  cursor: pointer;
+/* profile */
+
+.nav-avatar{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:12px;
+
+    border:none;
+
+    background:#fff;
+
+    border-radius:999px;
+
+    padding:6px 8px;
+
+    cursor:pointer;
+
+    transition:.25s;
+
+    box-shadow:0 4px 16px rgba(0,0,0,.06);
 }
 
-.nav-avatar-circle {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: var(--bg-dark);
-  color: #fff;
-  font-family: var(--font-mono);
-  font-weight: 700;
-  font-size: 0.75rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.nav-avatar:hover{
+
+    transform:translateY(-2px);
 }
 
-.nav-avatar-name {
-  font-size: 0.85rem;
-  font-weight: 600;
-  padding-right: 12px;
-  max-width: 120px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.nav-avatar-circle{
+
+    width:40px;
+
+    height:40px;
+
+    border-radius:50%;
+
+    background:#111;
+
+    color:white;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    font-weight:bold;
+
+    font-size:13px;
 }
 
-.nav-role-badge {
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  font-family: var(--font-mono);
-  color: var(--text-muted);
-  display: none;
+.nav-avatar-name{
+
+    font-size:14px;
+
+    font-weight:600;
+
+    color:#111;
+
+    max-width:140px;
+
+    overflow:hidden;
+
+    white-space:nowrap;
+
+    text-overflow:ellipsis;
 }
 
-@media (min-width: 901px) {
-  .nav-role-badge {
-    display: inline;
-  }
+.nav-role-badge{
+
+    font-size:12px;
+
+    color:#666;
+
+    text-transform:uppercase;
+
+    font-weight:600;
 }
 
-@media (max-width: 900px) {
-  .navbar {
-    padding: 0 var(--space-md);
-    padding-bottom: 60px;
-  }
+/* ======================================================
+                    MOBILE
+====================================================== */
 
-  .nav-tag {
-    display: block;
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    font-family: var(--font-mono);
-  }
+@media(max-width:768px){
 
-  .nav-user {
-    display: none;
-  }
+.navbar{
+
+    left:0;
+
+    height:var(--navbar-height);
+
+    padding:0 16px;
+
+    justify-content:space-between;
+}
+
+.connex-logo--navbar{
+
+    width:34px;
+
+    height:34px;
+}
+
+.nav-tag{
+
+    display:none;
+}
+
+.nav-avatar{
+
+    padding:0;
+
+    box-shadow:none;
+
+    background:transparent;
+}
+
+.nav-avatar-name{
+
+    display:none;
+}
+
+.nav-role-badge{
+
+    display:none;
+}
+
+.nav-avatar-circle{
+
+    width:38px;
+
+    height:38px;
+}
+
 }

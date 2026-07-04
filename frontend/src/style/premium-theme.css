@@ -32,9 +32,16 @@
   --font-display: "IBM Plex Sans", system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", monospace;
   --font-body: "IBM Plex Sans", system-ui, sans-serif;
-  --sidebar-width: 240px;
-  --navbar-height: 56px;
-  --mobile-nav-height: 52px;
+  --sidebar-width: 92px;
+  --navbar-height: 72px;
+  --mobile-nav-height: 74px;
+}
+
+@media (max-width: 768px) {
+  :root {
+    --navbar-height: 64px;
+    --mobile-nav-height: 72px;
+  }
 }
 
 body {
