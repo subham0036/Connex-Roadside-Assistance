@@ -12,7 +12,10 @@ Use this to give friends a **public link** before Play Store / custom domain.
 1. Push code to GitHub.
 2. [render.com](https://render.com) → New **Web Service** → connect repo, root: `backend`.
 3. Build: `npm install` · Start: `npm start` (or `node server.js`).
-4. Env: `MONGO_URI`, `JWT_SECRET`, `PORT=10000` (Render sets `PORT`).
+4. Env (Render → Environment):
+   - `MONGO_URI` — your Atlas connection string (required)
+   - `JWT_SECRET` — long random string
+   - Do **not** set `PORT`; Render sets it automatically
 5. Copy URL, e.g. `https://connex-api.onrender.com`.
 
 Run seed once on Render shell: `npm run seed:admin` (admin login stays private).
