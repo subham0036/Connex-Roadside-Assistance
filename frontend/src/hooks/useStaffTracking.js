@@ -31,7 +31,7 @@ export function useStaffTracking(requestId, enabled) {
     };
 
     fetchLoc();
-    const interval = setInterval(fetchLoc, 5000);
+    const interval = setInterval(fetchLoc, 3000);
     return () => clearInterval(interval);
   }, [requestId, enabled]);
 

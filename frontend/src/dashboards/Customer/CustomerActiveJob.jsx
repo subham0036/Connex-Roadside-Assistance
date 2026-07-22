@@ -5,7 +5,10 @@ import LiveMap from "../../components/common/LiveMap";
 import RequestChat from "../../components/chat/RequestChat";
 import JobStatusTimeline from "../../components/jobs/JobStatusTimeline";
 import CompletionModal from "../../components/jobs/CompletionModal";
+import { CustomerCancelRequest } from "../../components/jobs/RequestActions";
 import { useStaffTracking } from "../../hooks/useStaffTracking";
+import { useStaffRoute } from "../../hooks/useStaffRoute";
+import "../../components/jobs/RequestActions.css";
 import "./CustomerDashboard.css";
 
 const STATUS_LABEL = {
@@ -17,6 +20,7 @@ const STATUS_LABEL = {
   cancelled: "Cancelled",
 };
 
+const ROUTE_STATUSES = ["assigned", "en_route"];
 const TRACKING = ["assigned", "en_route", "arrived"];
 
 export default function CustomerActiveJob() {
@@ -28,6 +32,11 @@ export default function CustomerActiveJob() {
   const active = requests.find((r) => !["completed", "cancelled"].includes(r.status));
   const activeId = active?._id ? String(active._id) : null;
   const staffLocation = useStaffTracking(activeId, Boolean(active && TRACKING.includes(active.status)));
+
+  const loc = active?.requestLocation || {};
+  const showRoute =
+    Boolean(active && ROUTE_STATUSES.includes(active.status) && staffLocation?.lat != null && loc.lat != null);
+  const routePoints = useStaffRoute(staffLocation, loc, showRoute);
 
   const mapMarkers = useMemo(() => {
     if (!active || staffLocation?.lat == null) return [];
@@ -109,8 +118,6 @@ export default function CustomerActiveJob() {
     );
   }
 
-  const loc = active.requestLocation || {};
-
   return (
     <div className="customer-page">
       <header className="customer-header">
@@ -124,10 +131,19 @@ export default function CustomerActiveJob() {
 
       <JobStatusTimeline status={active.status} />
 
-      {active.status === "pending" && (
+      <CustomerCancelRequest request={active} onCancelled={loadRequests} />
+
+      {active.status === "pending" && !active.garageAccepted && (
         <div className="status-info-banner">
-          <strong>Garage is reviewing your request</strong>
-          <p>They will assign a mechanic shortly. You will see tracking once staff is on the way.</p>
+          <strong>Waiting for garage to accept</strong>
+          <p>{active.garageName} will accept or decline your request shortly.</p>
+        </div>
+      )}
+
+      {active.status === "pending" && active.garageAccepted && (
+        <div className="status-accepted-banner">
+          <strong>Garage accepted your request</strong>
+          <p>{active.garageName} is assigning a mechanic. You can cancel until staff is on the way.</p>
         </div>
       )}
 
@@ -136,7 +152,7 @@ export default function CustomerActiveJob() {
           <span className="pulse-dot" />
           <div>
             <strong>{active.assignedStaffName || "Mechanic"} is heading to you</strong>
-            <p>Live GPS on the map below</p>
+            <p>{showRoute ? "Follow the red route line on the map" : "Live GPS on the map below"}</p>
           </div>
         </div>
       )}
@@ -144,13 +160,16 @@ export default function CustomerActiveJob() {
       <div className="customer-layout single-col">
         <section className="premium-card map-panel">
           <h2>Live tracking</h2>
-          <p className="panel-sub">Your location · Green = assigned mechanic</p>
+          <p className="panel-sub">
+            Blue = you · Green = mechanic · {showRoute ? "Red line = live route to you" : "Route appears when mechanic is on the way"}
+          </p>
           {loc.lat != null ? (
             <LiveMap
               lat={loc.lat}
               lng={loc.lng}
               label="Your breakdown"
               markers={mapMarkers}
+              routePoints={routePoints}
               height="360px"
               centerType="customer"
             />

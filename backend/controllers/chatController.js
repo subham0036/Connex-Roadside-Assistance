@@ -53,10 +53,14 @@ exports.sendMessage = async (req, res) => {
   }
 };
 
+const CALL_TYPES = ["invite", "accept", "decline", "cancel"];
+const WEBRTC_TYPES = ["offer", "answer", "ice"];
+const ALL_SIGNAL_TYPES = [...WEBRTC_TYPES, ...CALL_TYPES];
+
 exports.postVideoSignal = async (req, res) => {
   try {
     const { type, payload } = req.body;
-    if (!["offer", "answer", "ice"].includes(type)) {
+    if (!ALL_SIGNAL_TYPES.includes(type)) {
       return res.status(400).json({ msg: "Invalid signal type." });
     }
 
@@ -66,11 +70,18 @@ exports.postVideoSignal = async (req, res) => {
       return res.status(403).json({ msg: "No access." });
     }
 
+    if (type === "invite") {
+      await VideoSignal.deleteMany({
+        requestId: request._id,
+        type: { $in: CALL_TYPES },
+      });
+    }
+
     const signal = await VideoSignal.create({
       requestId: request._id,
       fromUserId: req.user.id,
       type,
-      payload,
+      payload: payload ?? {},
     });
 
     res.status(201).json(signal);

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
 import api from "../../config/api";
 import "./ConnexVideoCall.css";
@@ -15,7 +15,20 @@ export default function ConnexVideoCall({ requestId, onClose }) {
   const handledRef = useRef(new Set());
   const [error, setError] = useState("");
   const [status, setStatus] = useState("Connecting...");
+  const [micMuted, setMicMuted] = useState(false);
   const userId = String(JSON.parse(localStorage.getItem("connex_user") || "{}").id || "");
+
+  const toggleMic = useCallback(() => {
+    const stream = streamRef.current;
+    if (!stream) return;
+    setMicMuted((prev) => {
+      const next = !prev;
+      stream.getAudioTracks().forEach((track) => {
+        track.enabled = !next;
+      });
+      return next;
+    });
+  }, []);
 
   useEffect(() => {
     if (!requestId || !userId) return undefined;
@@ -154,16 +167,15 @@ export default function ConnexVideoCall({ requestId, onClose }) {
   return createPortal(
     <div className="connex-video-overlay" role="dialog" aria-label="In-app video call">
       <div className="connex-video-bar">
-        <div>
+        <div className="connex-video-bar-info">
           <strong>Connex video</strong>
-          <p className="panel-sub">{status} · In-app only, no external apps</p>
+          <p className="panel-sub">{status}</p>
         </div>
-        <button type="button" className="video-close" onClick={endCall}>
-          End call
-        </button>
       </div>
+
       {error && <p className="connex-video-error">{error}</p>}
-      <div className="connex-video-grid">
+
+      <div className="connex-video-stage">
         <div className="connex-video-tile remote">
           <span className="video-label">Remote</span>
           <video ref={remoteRef} autoPlay playsInline />
@@ -171,7 +183,44 @@ export default function ConnexVideoCall({ requestId, onClose }) {
         <div className="connex-video-tile local">
           <span className="video-label">You</span>
           <video ref={localRef} autoPlay playsInline muted />
+          {micMuted && <span className="video-muted-badge">Muted</span>}
         </div>
+      </div>
+
+      <div className="connex-video-controls">
+        <button
+          type="button"
+          className={`video-ctrl-btn ${micMuted ? "is-active" : ""}`}
+          onClick={toggleMic}
+          aria-label={micMuted ? "Unmute microphone" : "Mute microphone"}
+          aria-pressed={micMuted}
+        >
+          <span className="video-ctrl-icon" aria-hidden="true">
+            {micMuted ? (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M1 1l22 22M9 9v3a3 3 0 005.12 2.12M15 9.34V5a3 3 0 00-5.94-.6" />
+                <path d="M17 16.95A7 7 0 015 12v-2m14 0v2a7 7 0 01-.11 1.23" />
+                <path d="M12 19v4M8 23h8" />
+              </svg>
+            ) : (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z" />
+                <path d="M19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8" />
+              </svg>
+            )}
+          </span>
+          <span className="video-ctrl-label">{micMuted ? "Unmute" : "Mute"}</span>
+        </button>
+
+        <button type="button" className="video-ctrl-btn video-ctrl-end" onClick={endCall}>
+          <span className="video-ctrl-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z" />
+              <line x1="1" y1="1" x2="23" y2="23" />
+            </svg>
+          </span>
+          <span className="video-ctrl-label">End</span>
+        </button>
       </div>
     </div>,
     document.body

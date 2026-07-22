@@ -48,12 +48,14 @@ export default function LiveMap({
   lng,
   label,
   markers = [],
+  routePoints = [],
   height = "100%",
   centerType = "customer",
 }) {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
   const markersLayerRef = useRef(null);
+  const routeLayerRef = useRef(null);
   const boundsFittedRef = useRef(false);
 
   const latNum = Number(lat);
@@ -75,6 +77,14 @@ export default function LiveMap({
         }))
       ),
     [markers]
+  );
+
+  const routeKey = useMemo(
+    () =>
+      JSON.stringify(
+        (routePoints || []).map(([a, b]) => [Number(a).toFixed(5), Number(b).toFixed(5)])
+      ),
+    [routePoints]
   );
 
   useEffect(() => {
@@ -105,13 +115,44 @@ export default function LiveMap({
     }).addTo(map);
 
     markersLayerRef.current = L.layerGroup().addTo(map);
+    routeLayerRef.current = L.layerGroup().addTo(map);
 
     return () => {
       safeRemoveMap(mapRef.current);
       mapRef.current = null;
       markersLayerRef.current = null;
+      routeLayerRef.current = null;
     };
   }, [centerKey]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    const routeLayer = routeLayerRef.current;
+    if (!map || !routeLayer || !centerKey) return;
+
+    routeLayer.clearLayers();
+    const routeList = routeKey ? JSON.parse(routeKey) : [];
+    if (routeList.length < 2) return;
+
+    const latLngs = routeList.map(([a, b]) => [Number(a), Number(b)]);
+
+    L.polyline(latLngs, {
+      color: "#991b1b",
+      weight: 9,
+      opacity: 0.25,
+      lineCap: "round",
+      lineJoin: "round",
+    }).addTo(routeLayer);
+
+    L.polyline(latLngs, {
+      color: "#ef4444",
+      weight: 5,
+      opacity: 0.95,
+      lineCap: "round",
+      lineJoin: "round",
+      className: "connex-route-line",
+    }).addTo(routeLayer);
+  }, [routeKey, centerKey]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -141,15 +182,22 @@ export default function LiveMap({
       points.push([mLat, mLng]);
     });
 
-    if (points.length > 1 && !boundsFittedRef.current) {
+    const routeList = routeKey ? JSON.parse(routeKey) : [];
+    routeList.forEach(([a, b]) => points.push([Number(a), Number(b)]));
+
+    if (points.length > 1) {
       try {
-        map.fitBounds(points, { padding: [48, 48], maxZoom: 15, animate: false });
+        map.fitBounds(points, {
+          padding: [48, 48],
+          maxZoom: 15,
+          animate: boundsFittedRef.current,
+        });
         boundsFittedRef.current = true;
       } catch {
         /* ignore bounds errors */
       }
     }
-  }, [markersKey, centerKey, label, centerType]);
+  }, [markersKey, routeKey, centerKey, label, centerType]);
 
   if (!centerKey) {
     return (

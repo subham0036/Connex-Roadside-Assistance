@@ -1,11 +1,15 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useMemo } from "react";
 import { Link } from "react-router-dom";
 import api from "../../config/api";
 import LiveMap from "../../components/common/LiveMap";
 import Toast from "../../components/common/Toast";
+import IncomingCallModal from "../../components/video/IncomingCallModal";
+import { useIncomingVideoCalls } from "../../hooks/useVideoCallInvite";
 import { useStaffTracking } from "../../hooks/useStaffTracking";
 import RequestDetailsModal from "../../components/garage/RequestDetailsModal";
+import { GarageRequestActions } from "../../components/jobs/RequestActions";
 import { requestTotalPaid } from "../../utils/requestPayments";
+import "../../components/jobs/RequestActions.css";
 import "../../dashboards/Garage/GarageDashboard.css";
 
 const STATUS_LABEL = {
@@ -24,11 +28,23 @@ export default function GarageDashboard() {
   const [staff, setStaff] = useState([]);
   const [garage, setGarage] = useState(null);
   const [selectedRequest, setSelectedRequest] = useState(null);
+  const [modalChatVideo, setModalChatVideo] = useState(false);
+  const [modalTab, setModalTab] = useState("details");
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState(null);
   const seenIdsRef = useRef(null);
   const statusMapRef = useRef(null);
   const initialLoadRef = useRef(true);
+
+  const activeRequestIds = useMemo(
+    () =>
+      requests
+        .filter((r) => !["completed", "cancelled"].includes(r.status))
+        .map((r) => String(r._id)),
+    [requests]
+  );
+
+  const { incoming, dismiss: dismissIncoming } = useIncomingVideoCalls(activeRequestIds);
 
   const liveRequest = requests.find((r) => LIVE_STATUSES.includes(r.status) && r.staffId);
   const staffLocation = useStaffTracking(liveRequest?._id, Boolean(liveRequest));
@@ -100,6 +116,62 @@ export default function GarageDashboard() {
     }
   }, []);
 
+  const acceptIncomingCall = async () => {
+    if (!incoming) return;
+    try {
+      await api.post(`/api/chat/${incoming.requestId}/video/signal`, {
+        type: "accept",
+        payload: {},
+      });
+      const req = requests.find((r) => String(r._id) === incoming.requestId);
+      if (req) {
+        setModalChatVideo(true);
+        setSelectedRequest(req);
+      }
+    } catch {
+      setToast({ title: "Could not accept call", body: "Try again from Chat & video tab." });
+    }
+    dismissIncoming();
+  };
+
+  const declineIncomingCall = async () => {
+    if (!incoming) return;
+    try {
+      await api.post(`/api/chat/${incoming.requestId}/video/signal`, {
+        type: "decline",
+        payload: {},
+      });
+    } catch {
+      /* ignore */
+    }
+    dismissIncoming();
+  };
+
+  const closeRequestModal = () => {
+    setSelectedRequest(null);
+    setModalChatVideo(false);
+    setModalTab("details");
+  };
+
+  const handleRequestUpdated = (updated) => {
+    loadData();
+    if (!updated) {
+      closeRequestModal();
+      return;
+    }
+    setSelectedRequest(updated);
+    if (updated.status === "cancelled") {
+      closeRequestModal();
+    }
+  };
+
+  const handleTileAction = (updated) => {
+    loadData();
+    if (updated && selectedRequest && String(selectedRequest._id) === String(updated._id)) {
+      setSelectedRequest(updated);
+    }
+  };
+
   if (!loading && !garage) {
     return (
       <div className="garage-page">
@@ -141,10 +213,18 @@ export default function GarageDashboard() {
   }
 
   const pendingCount = requests.filter((r) => r.status === "pending").length;
+  const showDashboardIncoming =
+    incoming && !(selectedRequest && modalTab === "chat");
 
   return (
     <div className="garage-page">
       <Toast alert={toast} onDismiss={() => setToast(null)} />
+
+      <IncomingCallModal
+        caller={showDashboardIncoming ? incoming?.from : null}
+        onAccept={acceptIncomingCall}
+        onDecline={declineIncomingCall}
+      />
 
       <header className="page-head">
         <span className="eyebrow">Partner portal</span>
@@ -180,11 +260,22 @@ export default function GarageDashboard() {
       ) : requests.length > 0 ? (
         <div className="requests-grid">
           {requests.map((req) => (
-            <button
-              type="button"
+            <div
               key={req._id}
               className={`premium-card request-tile ${req.status === "pending" ? "request-tile--new" : ""}`}
-              onClick={() => setSelectedRequest(req)}
+              role="button"
+              tabIndex={0}
+              onClick={() => {
+                setModalChatVideo(false);
+                setSelectedRequest(req);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setModalChatVideo(false);
+                  setSelectedRequest(req);
+                }
+              }}
             >
               <div>
                 <h3>{req.issue}</h3>
@@ -192,7 +283,9 @@ export default function GarageDashboard() {
                 <p>{req.vehicleType}</p>
               </div>
               <div className="request-tile-meta">
-                <span className={`status-badge status-${req.status}`}>{STATUS_LABEL[req.status]}</span>
+                <span className={`status-badge status-${req.status}`}>
+                  {req.status === "pending" && req.garageAccepted ? "Accepted" : STATUS_LABEL[req.status]}
+                </span>
                 <div className="request-amounts">
                   <strong>₹{requestTotalPaid(req)}</strong>
                   <span className="request-amount-breakdown">
@@ -201,7 +294,8 @@ export default function GarageDashboard() {
                   </span>
                 </div>
               </div>
-            </button>
+              <GarageRequestActions request={req} onUpdated={handleTileAction} compact />
+            </div>
           ))}
         </div>
       ) : (
@@ -215,11 +309,11 @@ export default function GarageDashboard() {
         <RequestDetailsModal
           request={selectedRequest}
           staff={staff}
-          onClose={() => setSelectedRequest(null)}
-          onUpdated={() => {
-            setSelectedRequest(null);
-            loadData();
-          }}
+          onClose={closeRequestModal}
+          onUpdated={handleRequestUpdated}
+          initialTab={modalChatVideo ? "chat" : "details"}
+          videoAutoStart={modalChatVideo}
+          onTabChange={setModalTab}
         />
       )}
     </div>

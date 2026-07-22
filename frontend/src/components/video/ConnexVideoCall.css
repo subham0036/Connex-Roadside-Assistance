@@ -5,55 +5,76 @@
   background: #0a0a0a;
   display: flex;
   flex-direction: column;
+  padding-bottom: env(safe-area-inset-bottom, 0);
 }
 
 .connex-video-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 20px;
-  background: #111;
+  padding: 12px 16px;
+  padding-top: max(12px, env(safe-area-inset-top, 0));
+  background: rgba(17, 17, 17, 0.95);
   color: #fff;
   border-bottom: 1px solid #333;
+  flex-shrink: 0;
+}
+
+.connex-video-bar-info {
+  min-width: 0;
+}
+
+.connex-video-bar strong {
+  font-size: 0.95rem;
 }
 
 .connex-video-bar .panel-sub {
   color: #a3a3a3;
-  margin-top: 4px;
-  font-size: 0.8rem;
+  margin-top: 2px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .connex-video-error {
-  padding: 12px 20px;
+  padding: 10px 16px;
   background: #7f1d1d;
   color: #fecaca;
   margin: 0;
+  font-size: 0.85rem;
+  flex-shrink: 0;
 }
 
-.connex-video-grid {
+.connex-video-stage {
   flex: 1;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  padding: 8px;
+  position: relative;
   min-height: 0;
+  overflow: hidden;
+  background: #000;
 }
 
 .connex-video-tile {
   position: relative;
   background: #1a1a1a;
-  border-radius: 12px;
   overflow: hidden;
-  min-height: 0;
 }
 
 .connex-video-tile.remote {
-  grid-column: 1 / -1;
-  min-height: 55vh;
+  width: 100%;
+  height: 100%;
 }
 
 .connex-video-tile.local {
-  max-height: 28vh;
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  width: min(28vw, 160px);
+  height: min(38vw, 220px);
+  border-radius: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  z-index: 2;
 }
 
 .connex-video-tile video {
@@ -61,29 +82,201 @@
   height: 100%;
   object-fit: cover;
   display: block;
-  min-height: 200px;
+  background: #111;
 }
 
 .video-label {
   position: absolute;
-  top: 10px;
-  left: 10px;
+  top: 8px;
+  left: 8px;
   z-index: 2;
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  background: rgba(0, 0, 0, 0.6);
+  letter-spacing: 0.08em;
+  background: rgba(0, 0, 0, 0.65);
   color: #fff;
-  padding: 4px 10px;
+  padding: 3px 8px;
   border-radius: 4px;
 }
 
-@media (max-width: 700px) {
-  .connex-video-grid {
-    grid-template-columns: 1fr;
+.video-muted-badge {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  z-index: 2;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  background: #dc2626;
+  color: #fff;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.connex-video-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 16px 20px;
+  padding-bottom: max(16px, env(safe-area-inset-bottom, 0));
+  background: rgba(17, 17, 17, 0.98);
+  border-top: 1px solid #333;
+  flex-shrink: 0;
+}
+
+.video-ctrl-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 72px;
+  min-height: 72px;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 16px;
+  background: #262626;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.video-ctrl-btn:active {
+  transform: scale(0.96);
+}
+
+.video-ctrl-btn.is-active {
+  background: #fff;
+  color: #111;
+}
+
+.video-ctrl-end {
+  background: #dc2626;
+  color: #fff;
+}
+
+.video-ctrl-end:hover,
+.video-ctrl-end:active {
+  background: #b91c1c;
+}
+
+.video-ctrl-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+}
+
+.video-ctrl-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.video-ctrl-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* Tablet / small desktop — side-by-side option */
+@media (min-width: 768px) {
+  .connex-video-stage {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 8px;
+    background: #0a0a0a;
   }
 
   .connex-video-tile.remote {
-    min-height: 50vh;
+    border-radius: 12px;
+    min-height: 0;
+  }
+
+  .connex-video-tile.local {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    width: auto;
+    height: auto;
+    min-height: 0;
+    border-radius: 12px;
+  }
+
+  .connex-video-controls {
+    gap: 32px;
+    padding: 20px;
+  }
+
+  .video-ctrl-btn {
+    min-width: 80px;
+    min-height: 80px;
+  }
+}
+
+/* Large screens — remote dominates */
+@media (min-width: 1024px) {
+  .connex-video-stage {
+    grid-template-columns: 1.6fr 1fr;
+  }
+}
+
+/* Small phones */
+@media (max-width: 380px) {
+  .connex-video-tile.local {
+    width: 100px;
+    height: 140px;
+    right: 8px;
+    bottom: 8px;
+  }
+
+  .connex-video-controls {
+    gap: 12px;
+    padding: 12px 16px;
+  }
+
+  .video-ctrl-btn {
+    min-width: 64px;
+    min-height: 64px;
+    border-radius: 14px;
+  }
+
+  .video-ctrl-icon {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+/* Landscape mobile */
+@media (max-height: 500px) and (orientation: landscape) {
+  .connex-video-bar {
+    padding: 8px 12px;
+  }
+
+  .connex-video-tile.local {
+    width: 120px;
+    height: 90px;
+    right: 8px;
+    bottom: 8px;
+  }
+
+  .connex-video-controls {
+    flex-direction: row;
+    padding: 10px 16px;
+  }
+
+  .video-ctrl-btn {
+    flex-direction: row;
+    min-width: auto;
+    min-height: 48px;
+    padding: 8px 16px;
+    gap: 8px;
+  }
+
+  .video-ctrl-label {
+    font-size: 0.8rem;
   }
 }

@@ -8,6 +8,9 @@ router.post("/create", auth, requireRole("customer"), requestController.createRe
 router.get("/mine", auth, requestController.getRequests);
 router.get("/all", auth, requireRole("admin"), requestController.getRequests);
 router.post("/:id/assign", auth, requireRole("mechanic"), requestController.assignStaff);
+router.post("/:id/accept", auth, requireRole("mechanic"), requestController.acceptRequest);
+router.post("/:id/reject", auth, requireRole("mechanic"), requestController.rejectRequest);
+router.post("/:id/cancel", auth, requireRole("customer"), requestController.cancelRequest);
 router.post("/:id/complete", auth, requestController.completeRequest);
 router.post("/:id/settle-commission", auth, requireRole("mechanic", "admin"), requestController.settleCommission);
 router.post("/:id/status", auth, requestController.updateStatus);

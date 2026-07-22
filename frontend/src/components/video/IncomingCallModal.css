@@ -1,0 +1,70 @@
+.incoming-call-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 11000;
+  background: rgba(0, 0, 0, 0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.incoming-call-card {
+  width: min(100%, 380px);
+  background: #fff;
+  border-radius: var(--radius-md, 12px);
+  padding: 28px 24px;
+  text-align: center;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+  animation: call-pop 0.25s ease-out;
+}
+
+@keyframes call-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.incoming-call-badge {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #666;
+  margin-bottom: 10px;
+}
+
+.incoming-call-card h2 {
+  font-size: 1.5rem;
+  margin-bottom: 6px;
+}
+
+.incoming-call-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.incoming-call-actions button {
+  flex: 1;
+  min-height: 48px;
+  border: none;
+  border-radius: var(--radius-sm, 8px);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.call-decline {
+  background: #f3f3f3;
+  color: #111;
+}
+
+.call-accept {
+  background: #111;
+  color: #fff;
+}

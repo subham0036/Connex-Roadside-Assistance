@@ -114,6 +114,10 @@ exports.assignStaff = async (req, res) => {
       return res.status(400).json({ msg: `Cannot assign staff — request is already ${request.status}.` });
     }
 
+    if (!request.garageAccepted) {
+      return res.status(400).json({ msg: "Accept the request before assigning staff." });
+    }
+
     if (request.staffId) {
       return res.status(400).json({ msg: "Staff already assigned to this request." });
     }
@@ -169,6 +173,84 @@ exports.updateStatus = async (req, res) => {
     res.json({ msg: "Status updated.", request });
   } catch (err) {
     res.status(500).json({ msg: "Could not update status.", error: err.message });
+  }
+};
+
+exports.acceptRequest = async (req, res) => {
+  try {
+    const request = await ServiceRequest.findById(req.params.id);
+    if (!request) return res.status(404).json({ msg: "Request not found." });
+
+    const owns = await userOwnsRequestGarage(req.user.id, request);
+    if (!owns) return res.status(403).json({ msg: "Not your garage request." });
+
+    if (request.status !== "pending") {
+      return res.status(400).json({ msg: `Cannot accept — request is already ${request.status}.` });
+    }
+
+    if (request.garageAccepted) {
+      return res.status(400).json({ msg: "Request already accepted." });
+    }
+
+    request.garageAccepted = true;
+    request.garageAcceptedAt = new Date();
+    await request.save();
+
+    res.json({ msg: "Request accepted. Assign staff when ready.", request });
+  } catch (err) {
+    res.status(500).json({ msg: "Could not accept request.", error: err.message });
+  }
+};
+
+exports.rejectRequest = async (req, res) => {
+  try {
+    const { reason } = req.body;
+    const request = await ServiceRequest.findById(req.params.id);
+    if (!request) return res.status(404).json({ msg: "Request not found." });
+
+    const owns = await userOwnsRequestGarage(req.user.id, request);
+    if (!owns) return res.status(403).json({ msg: "Not your garage request." });
+
+    if (request.status !== "pending") {
+      return res.status(400).json({ msg: `Cannot decline — request is already ${request.status}.` });
+    }
+
+    request.status = "cancelled";
+    request.cancelledBy = "garage";
+    request.cancelReason = reason?.trim() || "Declined by garage";
+    await request.save();
+
+    res.json({ msg: "Request declined.", request });
+  } catch (err) {
+    res.status(500).json({ msg: "Could not decline request.", error: err.message });
+  }
+};
+
+exports.cancelRequest = async (req, res) => {
+  try {
+    const { reason } = req.body;
+    const request = await ServiceRequest.findById(req.params.id);
+    if (!request) return res.status(404).json({ msg: "Request not found." });
+
+    if (!sameId(request.customerId, req.user.id)) {
+      return res.status(403).json({ msg: "Not your request." });
+    }
+
+    const cancellable = ["pending", "assigned"];
+    if (!cancellable.includes(request.status)) {
+      return res.status(400).json({
+        msg: "Cannot cancel now — mechanic is already on the way. Call the garage instead.",
+      });
+    }
+
+    request.status = "cancelled";
+    request.cancelledBy = "customer";
+    request.cancelReason = reason?.trim() || "Cancelled by customer";
+    await request.save();
+
+    res.json({ msg: "Request cancelled.", request });
+  } catch (err) {
+    res.status(500).json({ msg: "Could not cancel request.", error: err.message });
   }
 };
 
