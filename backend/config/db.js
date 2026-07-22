@@ -11,6 +11,19 @@ function stripEnvQuotes(value) {
   return trimmed;
 }
 
+function buildUriFromParts() {
+  const user = stripEnvQuotes(process.env.MONGO_USER || "");
+  const password = stripEnvQuotes(process.env.MONGO_PASSWORD || "");
+  if (!user || !password) return "";
+
+  const host = stripEnvQuotes(
+    process.env.MONGO_HOST || "cluster0.hfpod8x.mongodb.net"
+  ).replace(/^mongodb(\+srv)?:\/\//, "");
+  const db = stripEnvQuotes(process.env.MONGO_DB || "connex");
+
+  return `mongodb+srv://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${host}/${db}?retryWrites=true&w=majority`;
+}
+
 /**
  * If the password contains "@", Atlas strings like
  * mongodb+srv://user:pass@123@cluster0... must encode "@" as %40.
@@ -24,7 +37,14 @@ function normalizeMongoUri(uri) {
   const protocol = match[1];
   const rest = match[3];
   const atCount = (rest.match(/@/g) || []).length;
-  if (atCount <= 1) return trimmed;
+  if (atCount <= 1) {
+    // Ensure database name exists (Atlas template often ends with /?appName=...)
+    if (/^mongodb(\+srv)?:\/\/[^/]+\/?(\?|$)/i.test(trimmed)) {
+      const db = stripEnvQuotes(process.env.MONGO_DB || "connex");
+      return trimmed.replace(/\/?(\?|$)/, `/${db}$1`);
+    }
+    return trimmed;
+  }
 
   const lastAt = rest.lastIndexOf("@");
   const credentials = rest.slice(0, lastAt);
@@ -40,6 +60,9 @@ function normalizeMongoUri(uri) {
 }
 
 function resolveMongoUri() {
+  const fromParts = buildUriFromParts();
+  if (fromParts) return fromParts;
+
   const envKeys = ["MONGO_URI", "MONGODB_URI", "MONGO_URL", "DATABASE_URL"];
   let raw = "";
 
@@ -56,7 +79,7 @@ function resolveMongoUri() {
 
     if (isProduction) {
       throw new Error(
-        "MONGO_URI is not set. Add it in Render → Environment (mongodb+srv://... from MongoDB Atlas)."
+        "MongoDB not configured. On Render set MONGO_URI, or MONGO_USER + MONGO_PASSWORD (+ optional MONGO_HOST, MONGO_DB)."
       );
     }
 
@@ -75,8 +98,9 @@ function resolveMongoUri() {
 function logSafeTarget(uri) {
   try {
     const parsed = new URL(uri.replace(/^mongodb(\+srv)?:\/\//, "https://"));
-    const db = parsed.pathname.replace(/^\//, "") || "(default)";
-    console.log(`MongoDB target: host=${parsed.hostname} db=${db}`);
+    const db = parsed.pathname.replace(/^\//, "").split("/")[0] || "(default)";
+    const user = parsed.username || "(none)";
+    console.log(`MongoDB target: user=${user} host=${parsed.hostname} db=${db}`);
   } catch {
     console.log("MongoDB target: (could not parse URI — check MONGO_URI format)");
   }
@@ -89,6 +113,7 @@ const connectDB = async () => {
   try {
     await mongoose.connect(uri, {
       serverSelectionTimeoutMS: 15000,
+      authSource: "admin",
     });
     console.log("MongoDB connected");
   } catch (err) {
@@ -102,13 +127,13 @@ const connectDB = async () => {
 
     if (/bad auth|authentication failed/i.test(err.message)) {
       console.error(
-        "Fix: wrong username/password in Render MONGO_URI. Atlas → Database Access → confirm user password, then update MONGO_URI and redeploy."
+        "Fix: use separate Render vars MONGO_USER + MONGO_PASSWORD (recommended), or reset Atlas password and update MONGO_URI."
       );
     }
 
-    if (process.env.RENDER && !process.env.MONGO_URI) {
+    if (process.env.RENDER && !process.env.MONGO_URI && !process.env.MONGO_PASSWORD) {
       console.error(
-        "Render: set MONGO_URI in your service Environment tab (Atlas connection string)."
+        "Render: set MONGO_USER and MONGO_PASSWORD in Environment (easiest), or set MONGO_URI."
       );
     }
 
