@@ -17,7 +17,7 @@ function buildUriFromParts() {
   if (!user || !password) return "";
 
   const host = stripEnvQuotes(
-    process.env.MONGO_HOST || "cluster0.hfpod8x.mongodb.net"
+    process.env.MONGO_HOST || "cluster0.xxxxx.mongodb.net"
   ).replace(/^mongodb(\+srv)?:\/\//, "");
   const db = stripEnvQuotes(process.env.MONGO_DB || "connex");
 
