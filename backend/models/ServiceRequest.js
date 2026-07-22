@@ -39,7 +39,9 @@ const serviceRequestSchema = new mongoose.Schema(
     note: String,
     garageAccepted: { type: Boolean, default: false },
     garageAcceptedAt: Date,
-    cancelledBy: { type: String, enum: ["customer", "garage"] },
+    staffAccepted: { type: Boolean, default: false },
+    staffAcceptedAt: Date,
+    cancelledBy: { type: String, enum: ["customer", "garage", "staff"] },
     cancelReason: String,
     status: {
       type: String,

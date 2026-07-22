@@ -137,6 +137,7 @@ exports.assignStaff = async (req, res) => {
 
     request.staffId = staff._id;
     request.assignedStaffName = staff.name;
+    request.staffAccepted = false;
     request.status = "assigned";
     await request.save();
 
@@ -144,7 +145,7 @@ exports.assignStaff = async (req, res) => {
       .populate("customerId", "name phone")
       .populate("staffId", "name phone");
 
-    res.json({ msg: "Staff assigned successfully.", request: populated });
+    res.json({ msg: "Staff assigned — waiting for them to accept.", request: populated });
   } catch (err) {
     res.status(500).json({ msg: "Could not assign staff.", error: err.message });
   }
@@ -166,6 +167,10 @@ exports.updateStatus = async (req, res) => {
 
     if (!isStaff && !isOwner) {
       return res.status(403).json({ msg: "Not allowed to update this request." });
+    }
+
+    if (isStaff && request.staffAccepted === false) {
+      return res.status(400).json({ msg: "Accept the job assignment before updating status." });
     }
 
     request.status = status;
@@ -223,6 +228,61 @@ exports.rejectRequest = async (req, res) => {
     res.json({ msg: "Request declined.", request });
   } catch (err) {
     res.status(500).json({ msg: "Could not decline request.", error: err.message });
+  }
+};
+
+exports.staffAcceptAssignment = async (req, res) => {
+  try {
+    const request = await ServiceRequest.findById(req.params.id);
+    if (!request) return res.status(404).json({ msg: "Request not found." });
+
+    if (!sameId(request.staffId, req.user.id)) {
+      return res.status(403).json({ msg: "Not your assignment." });
+    }
+
+    if (request.status !== "assigned") {
+      return res.status(400).json({ msg: `Cannot accept — job status is ${request.status}.` });
+    }
+
+    if (request.staffAccepted === true) {
+      return res.status(400).json({ msg: "Job already accepted." });
+    }
+
+    request.staffAccepted = true;
+    request.staffAcceptedAt = new Date();
+    await request.save();
+
+    res.json({ msg: "Job accepted. You can navigate to the customer.", request });
+  } catch (err) {
+    res.status(500).json({ msg: "Could not accept assignment.", error: err.message });
+  }
+};
+
+exports.staffDeclineAssignment = async (req, res) => {
+  try {
+    const { reason } = req.body;
+    const request = await ServiceRequest.findById(req.params.id);
+    if (!request) return res.status(404).json({ msg: "Request not found." });
+
+    if (!sameId(request.staffId, req.user.id)) {
+      return res.status(403).json({ msg: "Not your assignment." });
+    }
+
+    if (request.status !== "assigned" || request.staffAccepted === true) {
+      return res.status(400).json({ msg: "Cannot decline this assignment." });
+    }
+
+    request.staffId = undefined;
+    request.assignedStaffName = undefined;
+    request.staffAccepted = false;
+    request.staffAcceptedAt = undefined;
+    request.status = "pending";
+    request.cancelReason = reason?.trim() || "Staff declined assignment";
+    await request.save();
+
+    res.json({ msg: "Assignment declined. Garage can assign another staff member.", request });
+  } catch (err) {
+    res.status(500).json({ msg: "Could not decline assignment.", error: err.message });
   }
 };
 
@@ -286,6 +346,10 @@ exports.completeRequest = async (req, res) => {
 
     if (!isStaff && !isOwner) {
       return res.status(403).json({ msg: "Not allowed to complete this request." });
+    }
+
+    if (isStaff && request.staffAccepted === false) {
+      return res.status(400).json({ msg: "Accept the job assignment before completing." });
     }
 
     request.repairAmount = repair;

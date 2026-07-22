@@ -31,11 +31,20 @@ export default function CustomerActiveJob() {
 
   const active = requests.find((r) => !["completed", "cancelled"].includes(r.status));
   const activeId = active?._id ? String(active._id) : null;
-  const staffLocation = useStaffTracking(activeId, Boolean(active && TRACKING.includes(active.status)));
+  const staffLocation = useStaffTracking(
+    activeId,
+    Boolean(active && TRACKING.includes(active.status) && active.staffAccepted !== false)
+  );
 
   const loc = active?.requestLocation || {};
   const showRoute =
-    Boolean(active && ROUTE_STATUSES.includes(active.status) && staffLocation?.lat != null && loc.lat != null);
+    Boolean(
+      active &&
+        ROUTE_STATUSES.includes(active.status) &&
+        active.staffAccepted !== false &&
+        staffLocation?.lat != null &&
+        loc.lat != null
+    );
   const routePoints = useStaffRoute(staffLocation, loc, showRoute);
 
   const mapMarkers = useMemo(() => {
@@ -147,7 +156,14 @@ export default function CustomerActiveJob() {
         </div>
       )}
 
-      {TRACKING.includes(active.status) && (
+      {active.status === "assigned" && active.staffAccepted === false && (
+        <div className="status-info-banner">
+          <strong>{active.assignedStaffName || "Mechanic"} assigned — waiting for confirmation</strong>
+          <p>They will accept and head to you shortly.</p>
+        </div>
+      )}
+
+      {TRACKING.includes(active.status) && active.staffAccepted !== false && (
         <div className="tracking-banner">
           <span className="pulse-dot" />
           <div>

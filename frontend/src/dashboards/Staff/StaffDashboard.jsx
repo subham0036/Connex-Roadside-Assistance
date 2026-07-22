@@ -1,9 +1,13 @@
 import React, { useEffect, useState } from "react";
 import api from "../../config/api";
 import LiveMap from "../../components/common/LiveMap";
+import RequestChat from "../../components/chat/RequestChat";
 import JobStatusTimeline from "../../components/jobs/JobStatusTimeline";
+import { StaffAssignmentActions } from "../../components/jobs/RequestActions";
 import { formatPaymentMethod } from "../../utils/requestPayments";
 import { usePublishStaffLocation } from "../../hooks/useStaffTracking";
+import { useStaffRoute } from "../../hooks/useStaffRoute";
+import "../../components/jobs/RequestActions.css";
 import "./StaffDashboard.css";
 
 const STATUS_ACTIONS = {
@@ -17,6 +21,10 @@ const PAYMENT_OPTIONS = [
   { value: "UPI", label: "UPI / QR scan" },
 ];
 
+function jobAccepted(job) {
+  return job && job.staffAccepted !== false;
+}
+
 export default function StaffDashboard() {
   const [location, setLocation] = useState({ lat: 28.6139, lng: 77.209 });
   const [activeJob, setActiveJob] = useState(null);
@@ -26,7 +34,9 @@ export default function StaffDashboard() {
   const [message, setMessage] = useState("");
   const [showDoneModal, setShowDoneModal] = useState(false);
 
-  const trackingOn = activeJob && ["assigned", "en_route", "arrived"].includes(activeJob.status);
+  const accepted = jobAccepted(activeJob);
+  const trackingOn =
+    accepted && activeJob && ["assigned", "en_route", "arrived"].includes(activeJob.status);
   usePublishStaffLocation(activeJob?._id, trackingOn);
 
   useEffect(() => {
@@ -51,6 +61,16 @@ export default function StaffDashboard() {
     } catch {
       setActiveJob(null);
     }
+  };
+
+  const handleAssignmentUpdated = (updated) => {
+    if (!updated) {
+      setActiveJob(null);
+      loadJobs();
+      return;
+    }
+    setActiveJob(updated);
+    loadJobs();
   };
 
   const updateStatus = async (jobId, status) => {
@@ -78,8 +98,16 @@ export default function StaffDashboard() {
 
   const customerLoc = activeJob?.requestLocation;
   const mapCenter = customerLoc?.lat != null ? { lat: customerLoc.lat, lng: customerLoc.lng } : location;
+  const showRoute =
+    accepted &&
+    activeJob &&
+    ["assigned", "en_route"].includes(activeJob.status) &&
+    customerLoc?.lat != null &&
+    location?.lat != null;
+  const routePoints = useStaffRoute(location, customerLoc, showRoute);
+
   const markers = [];
-  if (location?.lat != null && customerLoc?.lat != null) {
+  if (accepted && location?.lat != null && customerLoc?.lat != null) {
     const dLat = Math.abs(Number(location.lat) - Number(customerLoc.lat));
     const dLng = Math.abs(Number(location.lng) - Number(customerLoc.lng));
     if (dLat > 0.0001 || dLng > 0.0001) {
@@ -113,8 +141,7 @@ export default function StaffDashboard() {
         <p className="eyebrow">Staff dashboard</p>
         <h1 className="page-title">Go to customer & complete repair</h1>
         <p className="hero-copy">
-          Sign in anytime at <strong>/staff/login</strong> with your work email. After repair, record how
-          the customer paid (cash, card, or UPI/QR).
+          Accept assigned jobs, chat and video call the customer, then record on-site payment when done.
         </p>
       </header>
 
@@ -129,110 +156,143 @@ export default function StaffDashboard() {
         <div className="premium-card">
           <h3>Waiting for assignment</h3>
           <p className="panel-sub">
-            Your garage owner assigns you from their dashboard. You can close the browser and return
-            later — bookmark <strong>Staff sign-in</strong> on the main login page.
+            Your garage owner assigns you from their dashboard. You will get accept or decline when a job
+            is assigned to you.
           </p>
         </div>
       ) : (
-        <div className="staff-job-grid">
-          <div className="premium-card">
-            <JobStatusTimeline status={activeJob.status} compact />
-            <h3>{activeJob.issue}</h3>
-            <p>
-              <strong>{activeJob.vehicleType}</strong>
-            </p>
-            <p>Customer: {activeJob.customerName || activeJob.customerId?.name}</p>
-            <p>
-              Phone:{" "}
-              <a href={`tel:${activeJob.phone}`}>{activeJob.phone}</a>
-            </p>
+        <>
+          <StaffAssignmentActions request={activeJob} onUpdated={handleAssignmentUpdated} />
 
-            <div className="staff-visit-paid">
-              <span>Visit fee (already paid by customer)</span>
-              <strong>₹{activeJob.fixedFee}</strong>
-              <span className="payment-method-tag">
-                {formatPaymentMethod(activeJob.fixedFeePaymentMethod || activeJob.paymentMethod)}
-              </span>
-            </div>
+          <div className="staff-job-grid">
+            <div className="premium-card">
+              <JobStatusTimeline status={activeJob.status} compact />
+              <h3>{activeJob.issue}</h3>
+              <p>
+                <strong>{activeJob.vehicleType}</strong>
+              </p>
+              <p>Customer: {activeJob.customerName || activeJob.customerId?.name}</p>
+              <p>
+                Phone:{" "}
+                <a href={`tel:${activeJob.phone}`}>{activeJob.phone}</a>
+              </p>
 
-            {customerLoc?.lat != null && (
-              <a
-                className="btn-primary nav-link-btn"
-                href={`https://www.google.com/maps/dir/?api=1&destination=${customerLoc.lat},${customerLoc.lng}`}
-                target="_blank"
-                rel="noreferrer"
-              >
-                Navigate in Google Maps
-              </a>
-            )}
-            {STATUS_ACTIONS[activeJob.status] && (
-              <button
-                type="button"
-                className="rescue-btn"
-                disabled={loading}
-                onClick={() => updateStatus(activeJob._id, STATUS_ACTIONS[activeJob.status].next)}
-              >
-                {STATUS_ACTIONS[activeJob.status].label}
-              </button>
-            )}
-            {activeJob.status === "arrived" && (
-              <div className="staff-payment-block">
-                <h4>Complete job — on-site payment</h4>
-                <p className="panel-sub">
-                  Enter extra repair charges (₹0 if only visit fee). Select how the customer paid you
-                  on-site. Your garage owner sees the full total to prevent cheating.
-                </p>
-                <div className="form-field">
-                  <label>Extra repair amount (₹)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={repairAmount}
-                    onChange={(e) => setRepairAmount(e.target.value)}
-                    placeholder="0 if no extra charge"
-                  />
-                </div>
-                <label className="login-pro-label">Customer paid on-site via</label>
-                <div className="payment-method-options">
-                  {PAYMENT_OPTIONS.map((opt) => (
-                    <label key={opt.value}>
-                      <input
-                        type="radio"
-                        name="repairPay"
-                        value={opt.value}
-                        checked={repairPaymentMethod === opt.value}
-                        onChange={() => setRepairPaymentMethod(opt.value)}
-                      />
-                      {opt.label}
-                    </label>
-                  ))}
-                </div>
+              <div className="staff-visit-paid">
+                <span>Visit fee (already paid by customer)</span>
+                <strong>₹{activeJob.fixedFee}</strong>
+                <span className="payment-method-tag">
+                  {formatPaymentMethod(activeJob.fixedFeePaymentMethod || activeJob.paymentMethod)}
+                </span>
+              </div>
+
+              {accepted && customerLoc?.lat != null && (
+                <a
+                  className="btn-primary nav-link-btn"
+                  href={`https://www.google.com/maps/dir/?api=1&destination=${customerLoc.lat},${customerLoc.lng}`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Navigate in Google Maps
+                </a>
+              )}
+
+              {accepted && STATUS_ACTIONS[activeJob.status] && (
                 <button
                   type="button"
                   className="rescue-btn"
                   disabled={loading}
-                  onClick={() => updateStatus(activeJob._id, "completed")}
+                  onClick={() => updateStatus(activeJob._id, STATUS_ACTIONS[activeJob.status].next)}
                 >
-                  Complete job & send payment record
+                  {STATUS_ACTIONS[activeJob.status].label}
                 </button>
-              </div>
-            )}
-            {message && (
-              <p className={message.includes("updated") ? "toast-success" : "toast-error"}>{message}</p>
-            )}
+              )}
+
+              {accepted && activeJob.status === "arrived" && (
+                <div className="staff-payment-block">
+                  <h4>Complete job — on-site payment</h4>
+                  <p className="panel-sub">
+                    Enter extra repair charges (₹0 if only visit fee). Select how the customer paid you
+                    on-site.
+                  </p>
+                  <div className="form-field">
+                    <label>Extra repair amount (₹)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={repairAmount}
+                      onChange={(e) => setRepairAmount(e.target.value)}
+                      placeholder="0 if no extra charge"
+                    />
+                  </div>
+                  <label className="login-pro-label">Customer paid on-site via</label>
+                  <div className="payment-method-options">
+                    {PAYMENT_OPTIONS.map((opt) => (
+                      <label key={opt.value}>
+                        <input
+                          type="radio"
+                          name="repairPay"
+                          value={opt.value}
+                          checked={repairPaymentMethod === opt.value}
+                          onChange={() => setRepairPaymentMethod(opt.value)}
+                        />
+                        {opt.label}
+                      </label>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    className="rescue-btn"
+                    disabled={loading}
+                    onClick={() => updateStatus(activeJob._id, "completed")}
+                  >
+                    Complete job & send payment record
+                  </button>
+                </div>
+              )}
+
+              {!accepted && (
+                <p className="panel-sub staff-pending-hint">
+                  Accept the job above to unlock navigation, chat, and video call.
+                </p>
+              )}
+
+              {message && (
+                <p className={message.includes("updated") ? "toast-success" : "toast-error"}>{message}</p>
+              )}
+            </div>
+
+            <div className="premium-card map-panel">
+              <h3>Customer location</h3>
+              {accepted ? (
+                <>
+                  <p className="panel-sub">
+                    {showRoute ? "Red line = route to customer" : "Your GPS updates as you travel"}
+                  </p>
+                  <LiveMap
+                    lat={mapCenter.lat}
+                    lng={mapCenter.lng}
+                    label="Customer breakdown"
+                    markers={markers}
+                    routePoints={routePoints}
+                    height="400px"
+                    centerType="customer"
+                  />
+                </>
+              ) : (
+                <p className="panel-sub">Map and tracking unlock after you accept the job.</p>
+              )}
+            </div>
           </div>
-          <div className="premium-card map-panel">
-            <h3>Customer location</h3>
-            <LiveMap
-              lat={mapCenter.lat}
-              lng={mapCenter.lng}
-              label="Customer breakdown"
-              markers={markers}
-              height="400px"
-              centerType="customer"
-            />
-          </div>
-        </div>
+
+          {accepted && (
+            <div className="staff-chat-panel">
+              <RequestChat
+                requestId={String(activeJob._id)}
+                title={`Chat · ${activeJob.customerName || "Customer"}`}
+              />
+            </div>
+          )}
+        </>
       )}
     </div>
   );

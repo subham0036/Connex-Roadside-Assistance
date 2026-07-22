@@ -284,7 +284,11 @@ export default function GarageDashboard() {
               </div>
               <div className="request-tile-meta">
                 <span className={`status-badge status-${req.status}`}>
-                  {req.status === "pending" && req.garageAccepted ? "Accepted" : STATUS_LABEL[req.status]}
+                  {req.status === "assigned" && req.staffAccepted === false
+                    ? "Awaiting staff"
+                    : req.status === "pending" && req.garageAccepted
+                      ? "Accepted"
+                      : STATUS_LABEL[req.status]}
                 </span>
                 <div className="request-amounts">
                   <strong>₹{requestTotalPaid(req)}</strong>

@@ -20,6 +20,10 @@ exports.updateStaffLocation = async (req, res) => {
       return res.status(403).json({ msg: "Not your assigned job." });
     }
 
+    if (request.staffAccepted === false) {
+      return res.status(400).json({ msg: "Accept the job before sharing live location." });
+    }
+
     const location = await StaffLocation.findOneAndUpdate(
       { requestId },
       { staffId: req.user.id, lat: Number(lat), lng: Number(lng), updatedAt: new Date() },
@@ -47,6 +51,10 @@ exports.getStaffLocation = async (req, res) => {
 
     if (!isCustomer && !isGarageOwner && !isStaff) {
       return res.status(403).json({ msg: "Not allowed to view this location." });
+    }
+
+    if (request.staffAccepted === false && isCustomer) {
+      return res.json({ success: true, location: null });
     }
 
     const location = await StaffLocation.findOne({ requestId: request._id });

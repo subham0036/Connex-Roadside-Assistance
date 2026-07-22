@@ -48,6 +48,59 @@ export function GarageRequestActions({ request, onUpdated, compact = false }) {
   );
 }
 
+export function StaffAssignmentActions({ request, onUpdated }) {
+  const [loading, setLoading] = useState("");
+  const [error, setError] = useState("");
+
+  const needsResponse =
+    request.status === "assigned" && request.staffId && request.staffAccepted === false;
+
+  if (!needsResponse) return null;
+
+  const accept = async () => {
+    setLoading("accept");
+    setError("");
+    try {
+      const res = await api.post(`/api/requests/${request._id}/staff-accept`);
+      onUpdated?.(res.data?.request);
+    } catch (err) {
+      setError(err.response?.data?.msg || "Could not accept job.");
+    }
+    setLoading("");
+  };
+
+  const decline = async () => {
+    if (!window.confirm("Decline this job? Your garage owner can assign someone else.")) return;
+    setLoading("decline");
+    setError("");
+    try {
+      await api.post(`/api/requests/${request._id}/staff-decline`);
+      onUpdated?.(null);
+    } catch (err) {
+      setError(err.response?.data?.msg || "Could not decline job.");
+    }
+    setLoading("");
+  };
+
+  return (
+    <div className="staff-assignment-banner">
+      <div>
+        <strong>New job assignment</strong>
+        <p className="panel-sub">Accept to start navigation, or decline if you cannot take this job.</p>
+      </div>
+      <div className="request-actions">
+        <button type="button" className="btn-primary" disabled={!!loading} onClick={accept}>
+          {loading === "accept" ? "Accepting…" : "Accept job"}
+        </button>
+        <button type="button" className="btn-decline" disabled={!!loading} onClick={decline}>
+          {loading === "decline" ? "Declining…" : "Decline"}
+        </button>
+      </div>
+      {error && <p className="form-error">{error}</p>}
+    </div>
+  );
+}
+
 export function CustomerCancelRequest({ request, onCancelled }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");

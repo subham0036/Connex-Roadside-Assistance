@@ -43,6 +43,23 @@
   margin-top: 8px;
 }
 
+.staff-assignment-banner {
+  padding: 14px 16px;
+  margin-bottom: var(--space-md, 16px);
+  background: #fff7ed;
+  border: 1px solid #fdba74;
+  border-radius: var(--radius-sm, 8px);
+}
+
+.staff-assignment-banner strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.staff-assignment-banner .request-actions {
+  margin-top: 12px;
+}
+
 .status-accepted-banner {
   padding: 14px 16px;
   margin-bottom: var(--space-lg, 20px);

@@ -19,3 +19,14 @@
     grid-template-columns: 1fr;
   }
 }
+
+.staff-chat-panel {
+  margin-top: var(--space-lg);
+}
+
+.staff-pending-hint {
+  margin-top: var(--space-md);
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: var(--radius-sm);
+}
