@@ -41,6 +41,14 @@ const serviceRequestSchema = new mongoose.Schema(
     garageAcceptedAt: Date,
     staffAccepted: { type: Boolean, default: false },
     staffAcceptedAt: Date,
+    staffHistory: [
+      {
+        staffId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        staffName: String,
+        outcome: { type: String, enum: ["assigned", "accepted", "declined", "completed"] },
+        at: { type: Date, default: Date.now },
+      },
+    ],
     cancelledBy: { type: String, enum: ["customer", "garage", "staff"] },
     cancelReason: String,
     status: {

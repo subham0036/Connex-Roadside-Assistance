@@ -40,6 +40,11 @@ const ROLE_LINKS = {
       label: "My Job",
       icon: <MapPinned size={22} />,
     },
+    {
+      to: "/staff/history",
+      label: "History",
+      icon: <History size={22} />,
+    },
   ],
 
   admin: [
@@ -56,6 +61,24 @@ export default function Sidebar() {
 
   const [completedCount, setCompletedCount] = useState(0);
   const [hasActive, setHasActive] = useState(false);
+  const [staffHistoryCount, setStaffHistoryCount] = useState(0);
+
+  useEffect(() => {
+    if (role !== "staff") return;
+
+    api
+      .get("/api/requests/mine")
+      .then((res) => {
+        const list = res.data || [];
+        const completed = list.filter((r) => r.status === "completed").length;
+        const declined = list.reduce((acc, job) => {
+          const n = (job.staffHistory || []).filter((e) => e.outcome === "declined").length;
+          return acc + n;
+        }, 0);
+        setStaffHistoryCount(completed + declined);
+      })
+      .catch(() => {});
+  }, [role]);
 
   useEffect(() => {
     if (role !== "customer") return;
@@ -80,6 +103,12 @@ export default function Sidebar() {
   }, [role]);
 
   let links = ROLE_LINKS[role] || [];
+
+  if (role === "staff") {
+    links = ROLE_LINKS.staff.map((link) =>
+      link.to === "/staff/history" ? { ...link, badge: staffHistoryCount || null } : link
+    );
+  }
 
   if (role === "customer") {
     links = [

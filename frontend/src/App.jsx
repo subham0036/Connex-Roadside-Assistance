@@ -6,6 +6,7 @@ import CustomerActiveJob from "./dashboards/Customer/CustomerActiveJob";
 import CustomerCompleted from "./dashboards/Customer/CustomerCompleted";
 import AdminDashboard from "./dashboards/Admin/AdminDashboard";
 import StaffDashboard from "./dashboards/Staff/StaffDashboard";
+import StaffHistory from "./dashboards/Staff/StaffHistory";
 import GarageDashboard from "./pages/garage/GarageDashboard";
 import GarageSetup from "./pages/garage/GarageSetup";
 import GarageStaff from "./pages/garage/GarageStaff";
@@ -38,6 +39,7 @@ export default function App() {
           <Route path="/garage/setup" element={<ProtectedRoute allowedRoles={["mechanic"]}><GarageSetup /></ProtectedRoute>} />
           <Route path="/garage/staff" element={<ProtectedRoute allowedRoles={["mechanic"]}><GarageStaff /></ProtectedRoute>} />
           <Route path="/staff" element={<ProtectedRoute allowedRoles={["staff"]} loginPath="/staff/login"><StaffDashboard /></ProtectedRoute>} />
+          <Route path="/staff/history" element={<ProtectedRoute allowedRoles={["staff"]} loginPath="/staff/login"><StaffHistory /></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute allowedRoles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
 
           <Route path="/mechanic" element={<Navigate to="/garage" replace />} />

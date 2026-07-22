@@ -19,6 +19,12 @@ app.use(cors({
 }));
 
 app.use(express.json());
+app.use((req, res, next) => {
+  if (["POST", "PUT", "PATCH"].includes(req.method) && req.body == null) {
+    req.body = {};
+  }
+  next();
+});
 app.use(morgan("tiny"));
 
 app.use("/api/auth", require("./routes/authRoutes"));
@@ -35,6 +41,13 @@ app.get("/api/health", (req, res) => {
     status: dbReady ? "ok" : "degraded",
     service: "Connex backend",
     mongodb: dbReady ? "connected" : "disconnected",
+    routes: [
+      "POST /api/requests/:id/cancel",
+      "POST /api/requests/:id/reject",
+      "POST /api/requests/:id/staff-decline",
+      "POST /api/requests/:id/staff-accept",
+      "POST /api/requests/:id/accept",
+    ],
   });
 });
 

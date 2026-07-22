@@ -1,22 +1,28 @@
 import { useState } from "react";
 import api from "../../config/api";
+import { getApiError } from "../../utils/apiError";
 import "./RequestActions.css";
 
 export function GarageRequestActions({ request, onUpdated, compact = false }) {
   const [loading, setLoading] = useState("");
   const [error, setError] = useState("");
 
-  if (request.status !== "pending" || request.garageAccepted) return null;
+  const canAccept = request.status === "pending" && !request.garageAccepted && !request.staffId;
+  const canDecline =
+    (request.status === "pending" && !request.staffId) ||
+    (request.status === "assigned" && request.staffId && request.staffAccepted !== true);
+
+  if (!canAccept && !canDecline) return null;
 
   const accept = async (e) => {
     e?.stopPropagation?.();
     setLoading("accept");
     setError("");
     try {
-      const res = await api.post(`/api/requests/${request._id}/accept`);
+      const res = await api.post(`/api/requests/${request._id}/accept`, {});
       onUpdated?.(res.data?.request);
     } catch (err) {
-      setError(err.response?.data?.msg || "Could not accept request.");
+      setError(getApiError(err, "Could not accept request."));
     }
     setLoading("");
   };
@@ -27,22 +33,26 @@ export function GarageRequestActions({ request, onUpdated, compact = false }) {
     setLoading("reject");
     setError("");
     try {
-      const res = await api.post(`/api/requests/${request._id}/reject`);
+      const res = await api.post(`/api/requests/${request._id}/reject`, {});
       onUpdated?.(res.data?.request);
     } catch (err) {
-      setError(err.response?.data?.msg || "Could not decline request.");
+      setError(getApiError(err, "Could not decline request."));
     }
     setLoading("");
   };
 
   return (
     <div className={`request-actions ${compact ? "request-actions--compact" : ""}`} onClick={(e) => e.stopPropagation()}>
-      <button type="button" className="btn-primary" disabled={!!loading} onClick={accept}>
-        {loading === "accept" ? "Accepting…" : "Accept request"}
-      </button>
-      <button type="button" className="btn-decline" disabled={!!loading} onClick={reject}>
-        {loading === "reject" ? "Declining…" : "Decline"}
-      </button>
+      {canAccept && (
+        <button type="button" className="btn-primary" disabled={!!loading} onClick={accept}>
+          {loading === "accept" ? "Accepting…" : "Accept request"}
+        </button>
+      )}
+      {canDecline && (
+        <button type="button" className="btn-decline" disabled={!!loading} onClick={reject}>
+          {loading === "reject" ? "Declining…" : "Decline"}
+        </button>
+      )}
       {error && <p className="form-error">{error}</p>}
     </div>
   );
@@ -61,10 +71,10 @@ export function StaffAssignmentActions({ request, onUpdated }) {
     setLoading("accept");
     setError("");
     try {
-      const res = await api.post(`/api/requests/${request._id}/staff-accept`);
+      const res = await api.post(`/api/requests/${request._id}/staff-accept`, {});
       onUpdated?.(res.data?.request);
     } catch (err) {
-      setError(err.response?.data?.msg || "Could not accept job.");
+      setError(getApiError(err, "Could not accept job."));
     }
     setLoading("");
   };
@@ -74,10 +84,10 @@ export function StaffAssignmentActions({ request, onUpdated }) {
     setLoading("decline");
     setError("");
     try {
-      await api.post(`/api/requests/${request._id}/staff-decline`);
+      await api.post(`/api/requests/${request._id}/staff-decline`, {});
       onUpdated?.(null);
     } catch (err) {
-      setError(err.response?.data?.msg || "Could not decline job.");
+      setError(getApiError(err, "Could not decline job."));
     }
     setLoading("");
   };
@@ -105,7 +115,9 @@ export function CustomerCancelRequest({ request, onCancelled }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const canCancel = ["pending", "assigned"].includes(request.status);
+  const canCancel =
+    request.status === "pending" ||
+    (request.status === "assigned" && request.staffAccepted !== true);
 
   if (!canCancel) return null;
 
@@ -114,10 +126,10 @@ export function CustomerCancelRequest({ request, onCancelled }) {
     setLoading(true);
     setError("");
     try {
-      await api.post(`/api/requests/${request._id}/cancel`);
+      await api.post(`/api/requests/${request._id}/cancel`, {});
       onCancelled?.();
     } catch (err) {
-      setError(err.response?.data?.msg || "Could not cancel request.");
+      setError(getApiError(err, "Could not cancel request."));
     }
     setLoading(false);
   };

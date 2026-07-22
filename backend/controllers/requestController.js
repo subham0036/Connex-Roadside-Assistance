@@ -3,8 +3,7 @@ const Garage = require("../models/Garage");
 const User = require("../models/User");
 const { getGarageForOwner, userOwnsRequestGarage } = require("../utils/garageAuth");
 const { normalizePaymentMethod } = require("../utils/paymentMethod");
-
-const sameId = (a, b) => a != null && b != null && String(a) === String(b);
+const { sameId, isValidObjectId, invalidIdResponse } = require("../utils/idHelpers");
 
 exports.createRequest = async (req, res) => {
   try {
@@ -85,7 +84,7 @@ exports.getRequests = async (req, res) => {
       const garages = await Garage.find({ userId: req.user.id });
       filter.garageId = { $in: garages.map((g) => g._id) };
     } else if (req.user.role === "staff") {
-      filter.staffId = req.user.id;
+      filter.$or = [{ staffId: req.user.id }, { "staffHistory.staffId": req.user.id }];
     }
 
     const requests = await ServiceRequest.find(filter)
@@ -139,6 +138,13 @@ exports.assignStaff = async (req, res) => {
     request.assignedStaffName = staff.name;
     request.staffAccepted = false;
     request.status = "assigned";
+    request.staffHistory = request.staffHistory || [];
+    request.staffHistory.push({
+      staffId: staff._id,
+      staffName: staff.name,
+      outcome: "assigned",
+      at: new Date(),
+    });
     await request.save();
 
     const populated = await ServiceRequest.findById(request._id)
@@ -209,24 +215,46 @@ exports.acceptRequest = async (req, res) => {
 
 exports.rejectRequest = async (req, res) => {
   try {
-    const { reason } = req.body;
+    const { reason } = req.body || {};
+    if (!isValidObjectId(req.params.id)) return invalidIdResponse(res);
+
     const request = await ServiceRequest.findById(req.params.id);
     if (!request) return res.status(404).json({ msg: "Request not found." });
 
     const owns = await userOwnsRequestGarage(req.user.id, request);
     if (!owns) return res.status(403).json({ msg: "Not your garage request." });
 
-    if (request.status !== "pending") {
+    const staffPending =
+      request.status === "assigned" && request.staffId && request.staffAccepted !== true;
+    const pendingNoStaff = request.status === "pending" && !request.staffId;
+
+    if (!pendingNoStaff && !staffPending) {
+      if (request.staffId && request.staffAccepted) {
+        return res.status(400).json({
+          msg: "Mechanic already accepted — call them or wait until the job finishes.",
+        });
+      }
       return res.status(400).json({ msg: `Cannot decline — request is already ${request.status}.` });
     }
 
-    request.status = "cancelled";
-    request.cancelledBy = "garage";
-    request.cancelReason = reason?.trim() || "Declined by garage";
-    await request.save();
+    const updated = await ServiceRequest.findByIdAndUpdate(
+      request._id,
+      {
+        $set: {
+          status: "cancelled",
+          cancelledBy: "garage",
+          cancelReason: reason?.trim() || "Declined by garage",
+          garageAccepted: false,
+          staffAccepted: false,
+        },
+        $unset: { staffId: "", assignedStaffName: "", staffAcceptedAt: "" },
+      },
+      { new: true, runValidators: true }
+    );
 
-    res.json({ msg: "Request declined.", request });
+    res.json({ msg: "Request declined.", request: updated });
   } catch (err) {
+    console.error("rejectRequest:", err.message);
     res.status(500).json({ msg: "Could not decline request.", error: err.message });
   }
 };
@@ -250,6 +278,13 @@ exports.staffAcceptAssignment = async (req, res) => {
 
     request.staffAccepted = true;
     request.staffAcceptedAt = new Date();
+    request.staffHistory = request.staffHistory || [];
+    request.staffHistory.push({
+      staffId: req.user.id,
+      staffName: request.assignedStaffName || req.user.name,
+      outcome: "accepted",
+      at: new Date(),
+    });
     await request.save();
 
     res.json({ msg: "Job accepted. You can navigate to the customer.", request });
@@ -260,7 +295,9 @@ exports.staffAcceptAssignment = async (req, res) => {
 
 exports.staffDeclineAssignment = async (req, res) => {
   try {
-    const { reason } = req.body;
+    const { reason } = req.body || {};
+    if (!isValidObjectId(req.params.id)) return invalidIdResponse(res);
+
     const request = await ServiceRequest.findById(req.params.id);
     if (!request) return res.status(404).json({ msg: "Request not found." });
 
@@ -272,23 +309,40 @@ exports.staffDeclineAssignment = async (req, res) => {
       return res.status(400).json({ msg: "Cannot decline this assignment." });
     }
 
-    request.staffId = undefined;
-    request.assignedStaffName = undefined;
-    request.staffAccepted = false;
-    request.staffAcceptedAt = undefined;
-    request.status = "pending";
-    request.cancelReason = reason?.trim() || "Staff declined assignment";
-    await request.save();
+    const staffName = request.assignedStaffName || req.user.name;
+    const historyEntry = {
+      staffId: req.user.id,
+      staffName,
+      outcome: "declined",
+      at: new Date(),
+    };
 
-    res.json({ msg: "Assignment declined. Garage can assign another staff member.", request });
+    const updated = await ServiceRequest.findByIdAndUpdate(
+      request._id,
+      {
+        $push: { staffHistory: historyEntry },
+        $unset: { staffId: "", assignedStaffName: "", staffAcceptedAt: "" },
+        $set: {
+          staffAccepted: false,
+          status: "pending",
+          cancelReason: reason?.trim() || "Staff declined assignment",
+        },
+      },
+      { new: true, runValidators: true }
+    );
+
+    res.json({ msg: "Assignment declined. Garage can assign another staff member.", request: updated });
   } catch (err) {
+    console.error("staffDeclineAssignment:", err.message);
     res.status(500).json({ msg: "Could not decline assignment.", error: err.message });
   }
 };
 
 exports.cancelRequest = async (req, res) => {
   try {
-    const { reason } = req.body;
+    const { reason } = req.body || {};
+    if (!isValidObjectId(req.params.id)) return invalidIdResponse(res);
+
     const request = await ServiceRequest.findById(req.params.id);
     if (!request) return res.status(404).json({ msg: "Request not found." });
 
@@ -303,13 +357,28 @@ exports.cancelRequest = async (req, res) => {
       });
     }
 
-    request.status = "cancelled";
-    request.cancelledBy = "customer";
-    request.cancelReason = reason?.trim() || "Cancelled by customer";
-    await request.save();
+    if (request.status === "assigned" && request.staffAccepted === true) {
+      return res.status(400).json({
+        msg: "Mechanic already accepted and may be on the way. Call the garage to cancel.",
+      });
+    }
 
-    res.json({ msg: "Request cancelled.", request });
+    const updated = await ServiceRequest.findByIdAndUpdate(
+      request._id,
+      {
+        $set: {
+          status: "cancelled",
+          cancelledBy: "customer",
+          cancelReason: reason?.trim() || "Cancelled by customer",
+        },
+        $unset: { staffId: "", assignedStaffName: "", staffAcceptedAt: "" },
+      },
+      { new: true, runValidators: true }
+    );
+
+    res.json({ msg: "Request cancelled.", request: updated });
   } catch (err) {
+    console.error("cancelRequest:", err.message);
     res.status(500).json({ msg: "Could not cancel request.", error: err.message });
   }
 };
@@ -361,6 +430,15 @@ exports.completeRequest = async (req, res) => {
     request.platformCommission = ServiceRequest.calcCommission(request.fixedFee, request.repairAmount);
     request.status = "completed";
     request.commissionSettled = false;
+    if (request.staffId) {
+      request.staffHistory = request.staffHistory || [];
+      request.staffHistory.push({
+        staffId: request.staffId,
+        staffName: request.assignedStaffName,
+        outcome: "completed",
+        at: new Date(),
+      });
+    }
     await request.save();
 
     const total = request.fixedFee + request.repairAmount;

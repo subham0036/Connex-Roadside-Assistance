@@ -33,6 +33,14 @@ api.interceptors.response.use(
       localStorage.removeItem("connex_user");
       window.location.href = role === "staff" ? "/staff/login" : "/login";
     }
+
+    const data = err.response?.data;
+    if (typeof data === "string" && data.includes("Cannot POST")) {
+      err.response.data = {
+        msg: "Server route not found. Redeploy the backend on Render with the latest code.",
+      };
+    }
+
     return Promise.reject(err);
   }
 );
