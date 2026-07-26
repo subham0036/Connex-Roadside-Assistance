@@ -85,6 +85,44 @@ async function sendOtpEmail(email, otp) {
   }
 }
 
+const NOTICE_SUBJECTS = {
+  warning: "Connex — official warning for your garage",
+  pause: "Connex — your garage is paused on the customer app",
+  suspend: "Connex — your garage account is suspended",
+  activate: "Connex — your garage is active again",
+};
+
+async function sendGarageNoticeEmail(email, shopName, noticeType, message) {
+  if (!email || !process.env.EMAIL_USER) {
+    return { sent: false, error: "Email not configured" };
+  }
+
+  try {
+    const transporter = getTransporter();
+    const subject = NOTICE_SUBJECTS[noticeType] || "Connex — message from platform admin";
+    const info = await transporter.sendMail({
+      from: `"Connex Admin" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
+      to: email,
+      subject,
+      html: `
+        <div style="font-family:Arial,sans-serif;padding:24px;background:#f5f5f5;">
+          <div style="background:#fff;padding:24px;border-radius:8px;max-width:560px;margin:auto;">
+            <h2 style="margin-top:0;">${shopName}</h2>
+            <p><strong>${subject}</strong></p>
+            <p style="white-space:pre-wrap;line-height:1.5;">${message}</p>
+            <p style="font-size:12px;color:#666;">Sign in to your garage dashboard on Connex to read this notice.</p>
+          </div>
+        </div>
+      `,
+    });
+    return { sent: true, messageId: info.messageId };
+  } catch (err) {
+    console.error("[Email] Garage notice failed:", err.message);
+    return { sent: false, error: err.message };
+  }
+}
+
 module.exports = {
   sendOtpEmail,
+  sendGarageNoticeEmail,
 };

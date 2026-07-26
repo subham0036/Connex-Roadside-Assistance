@@ -1,0 +1,83 @@
+.upi-payment-panel {
+  margin: var(--space-md) 0;
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  border: 2px solid #bbf7d0;
+  background: #f0fdf4;
+}
+
+.upi-payment-panel h3 {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+}
+
+.upi-payment-panel--empty {
+  border-color: #fde68a;
+  background: #fffbeb;
+}
+
+.upi-qr-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin: var(--space-md) 0;
+}
+
+.upi-qr-image {
+  width: min(220px, 100%);
+  height: auto;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: #fff;
+  padding: 8px;
+}
+
+.upi-qr-caption {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.upi-id-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 12px;
+  background: #fff;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+}
+
+.upi-id-label {
+  display: block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.upi-id-value {
+  font-family: var(--font-mono, monospace);
+  word-break: break-all;
+}
+
+.upi-panel-loading {
+  margin: var(--space-md) 0;
+}
+
+.upi-setup-preview {
+  margin-top: var(--space-sm);
+  max-width: 180px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: #fff;
+  padding: 8px;
+}
+
+.upi-setup-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}

@@ -2,7 +2,9 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../config/api";
 import LocationPickerMap from "../../components/maps/LocationPickerMap";
+import { readQrImageFile } from "../../utils/upiPayment";
 import "../../components/maps/LocationPickerMap.css";
+import "../../components/payment/UpiPaymentPanel.css";
 import "../../dashboards/Garage/GarageDashboard.css";
 
 function captureCurrentLocation(setForm, setLocationOk, setError) {
@@ -36,7 +38,10 @@ export default function GarageSetup() {
     lng: "",
     services: "Tyre Repair, Battery Jump, Engine Repair, Fuel Delivery",
     mapNote: "",
+    upiId: "",
   });
+  const [upiQrPreview, setUpiQrPreview] = useState("");
+  const [removeUpiQr, setRemoveUpiQr] = useState(false);
   const [locationOk, setLocationOk] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -62,7 +67,10 @@ export default function GarageSetup() {
           lat: lat || "",
           lng: lng || "",
           services: (res.data.services || []).join(", "),
+          upiId: res.data.upiId || "",
         });
+        setUpiQrPreview(res.data.upiQrCode || "");
+        setRemoveUpiQr(false);
         if (lat && lng) {
           setLocationOk(true);
           setLocationMode("map");
@@ -90,6 +98,9 @@ export default function GarageSetup() {
         .split(",")
         .map((s) => s.trim())
         .filter(Boolean),
+      upiId: form.upiId.trim(),
+      upiQrCode: upiQrPreview || undefined,
+      removeUpiQr: removeUpiQr && !upiQrPreview,
     };
 
     try {
@@ -103,6 +114,20 @@ export default function GarageSetup() {
       setError(err.response?.data?.msg || "Could not save garage profile.");
     }
     setLoading(false);
+  };
+
+  const handleQrUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setError("");
+    try {
+      const dataUrl = await readQrImageFile(file);
+      setUpiQrPreview(dataUrl);
+      setRemoveUpiQr(false);
+    } catch (err) {
+      setError(err.message || "Could not upload QR code.");
+    }
+    e.target.value = "";
   };
 
   return (
@@ -206,6 +231,38 @@ export default function GarageSetup() {
 
         <label>Services (comma separated)</label>
         <input value={form.services} onChange={(e) => setForm({ ...form, services: e.target.value })} />
+
+        <div className="upi-setup-section">
+          <label>UPI ID (for visit fee payments)</label>
+          <input
+            value={form.upiId}
+            onChange={(e) => setForm({ ...form, upiId: e.target.value })}
+            placeholder="yourshop@paytm or 9876543210@ybl"
+          />
+          <p className="section-copy">
+            Customers who choose UPI will see this ID and can copy it to pay the visit fee.
+          </p>
+
+          <label>UPI QR code image</label>
+          <input type="file" accept="image/png,image/jpeg,image/jpg,image/webp" onChange={handleQrUpload} />
+          <p className="section-copy">Upload your GPay / PhonePe QR (PNG or JPG, max 400 KB).</p>
+
+          {upiQrPreview && (
+            <div className="upi-setup-actions">
+              <img src={upiQrPreview} alt="UPI QR preview" className="upi-setup-preview" />
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => {
+                  setUpiQrPreview("");
+                  setRemoveUpiQr(true);
+                }}
+              >
+                Remove QR
+              </button>
+            </div>
+          )}
+        </div>
 
         {error && <p className="form-error">{error}</p>}
 

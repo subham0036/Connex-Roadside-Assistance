@@ -7,9 +7,11 @@ import IncomingCallModal from "../../components/video/IncomingCallModal";
 import { useIncomingVideoCalls } from "../../hooks/useVideoCallInvite";
 import { useStaffTracking } from "../../hooks/useStaffTracking";
 import RequestDetailsModal from "../../components/garage/RequestDetailsModal";
+import GarageNoticeBanner from "../../components/garage/GarageNoticeBanner";
 import { GarageRequestActions } from "../../components/jobs/RequestActions";
 import { requestTotalPaid } from "../../utils/requestPayments";
 import "../../components/jobs/RequestActions.css";
+import "../../components/garage/GarageNoticeBanner.css";
 import "../../dashboards/Garage/GarageDashboard.css";
 
 const STATUS_LABEL = {
@@ -234,6 +236,8 @@ export default function GarageDashboard() {
           <strong>{pendingCount} new request{pendingCount !== 1 ? "s" : ""}</strong>
         </p>
       </header>
+
+      <GarageNoticeBanner garage={garage} onDismiss={loadData} />
 
       {liveRequest && mapCenter?.lat != null && (
         <section className="premium-card live-track-panel">

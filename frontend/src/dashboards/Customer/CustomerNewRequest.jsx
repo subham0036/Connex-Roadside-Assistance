@@ -2,6 +2,8 @@ import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../config/api";
 import LiveMap from "../../components/common/LiveMap";
+import UpiPaymentPanel from "../../components/payment/UpiPaymentPanel";
+import "../../components/payment/UpiPaymentPanel.css";
 import "./CustomerDashboard.css";
 
 export default function CustomerNewRequest() {
@@ -273,6 +275,13 @@ export default function CustomerNewRequest() {
                   </button>
                 ))}
               </div>
+              {paymentMethod === "UPI" && (
+                <UpiPaymentPanel
+                  garageId={selectedGarage._id}
+                  amount={selectedGarage.fixedFee}
+                  shopName={selectedGarage.shopName}
+                />
+              )}
               <label className="checkbox-row">
                 <input
                   type="checkbox"

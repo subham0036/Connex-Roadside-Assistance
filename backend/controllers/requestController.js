@@ -4,6 +4,7 @@ const User = require("../models/User");
 const { getGarageForOwner, userOwnsRequestGarage } = require("../utils/garageAuth");
 const { normalizePaymentMethod } = require("../utils/paymentMethod");
 const { sameId, isValidObjectId, invalidIdResponse } = require("../utils/idHelpers");
+const { isGarageVisibleToCustomers } = require("../utils/garageVisibility");
 
 exports.createRequest = async (req, res) => {
   try {
@@ -32,8 +33,8 @@ exports.createRequest = async (req, res) => {
     }
 
     const garage = await Garage.findById(garageId);
-    if (!garage || !garage.isApproved) {
-      return res.status(404).json({ msg: "Garage not found or not approved yet." });
+    if (!garage || !isGarageVisibleToCustomers(garage)) {
+      return res.status(404).json({ msg: "Garage not found or not available for booking." });
     }
 
     const visitPayment = normalizePaymentMethod(paymentMethod, "UPI");

@@ -1,5 +1,7 @@
 const Garage = require("../models/Garage");
 const User = require("../models/User");
+const { customerVisibleGarageFilter, isGarageVisibleToCustomers } = require("../utils/garageVisibility");
+const { applyPaymentFields, publicPaymentPayload } = require("../utils/garagePayment");
 
 function getDistance(lat1, lng1, lat2, lng2) {
   const toRad = (value) => (value * Math.PI) / 180;
@@ -18,7 +20,7 @@ exports.registerGarage = async (req, res) => {
       return res.status(403).json({ msg: "Only garage owners can register a garage." });
     }
 
-    const { shopName, phone, address, fixedFee, lat, lng, services } = req.body;
+    const { shopName, phone, address, fixedFee, lat, lng, services, upiId, upiQrCode, removeUpiQr } = req.body;
     if (!shopName || !phone || !address || fixedFee == null) {
       return res.status(400).json({ msg: "Shop name, phone, address, and visit fee are required." });
     }
@@ -28,7 +30,7 @@ exports.registerGarage = async (req, res) => {
       return res.status(400).json({ msg: "Garage already registered. Update your profile instead." });
     }
 
-    const garage = await Garage.create({
+    const garage = new Garage({
       userId: req.user.id,
       shopName,
       phone,
@@ -37,7 +39,11 @@ exports.registerGarage = async (req, res) => {
       location: { lat: Number(lat), lng: Number(lng) },
       services: services || undefined,
       isApproved: true,
+      moderationStatus: "active",
     });
+    const paymentCheck = applyPaymentFields(garage, { upiId, upiQrCode, removeUpiQr });
+    if (!paymentCheck.ok) return res.status(400).json({ msg: paymentCheck.msg });
+    await garage.save();
 
     res.status(201).json({ msg: "Garage listed on Connex successfully.", garage });
   } catch (err) {
@@ -49,9 +55,32 @@ exports.getMyGarage = async (req, res) => {
   try {
     const garage = await Garage.findOne({ userId: req.user.id });
     if (!garage) return res.status(404).json({ msg: "No garage registered yet." });
-    res.json(garage);
+
+    const unreadNotices = (garage.adminNotices || []).filter((n) => !n.readAt);
+    res.json({
+      ...garage.toObject(),
+      unreadNoticeCount: unreadNotices.length,
+      latestNotice: unreadNotices.length ? unreadNotices[unreadNotices.length - 1] : null,
+    });
   } catch (err) {
     res.status(500).json({ msg: "Could not fetch garage.", error: err.message });
+  }
+};
+
+exports.markNoticesRead = async (req, res) => {
+  try {
+    const garage = await Garage.findOne({ userId: req.user.id });
+    if (!garage) return res.status(404).json({ msg: "No garage registered yet." });
+
+    const now = new Date();
+    (garage.adminNotices || []).forEach((notice) => {
+      if (!notice.readAt) notice.readAt = now;
+    });
+    await garage.save();
+
+    res.json({ msg: "Notices marked as read.", garage });
+  } catch (err) {
+    res.status(500).json({ msg: "Could not update notices.", error: err.message });
   }
 };
 
@@ -60,13 +89,15 @@ exports.updateGarage = async (req, res) => {
     const garage = await Garage.findOne({ userId: req.user.id });
     if (!garage) return res.status(404).json({ msg: "Garage not found." });
 
-    const { shopName, phone, address, fixedFee, lat, lng, services } = req.body;
+    const { shopName, phone, address, fixedFee, lat, lng, services, upiId, upiQrCode, removeUpiQr } = req.body;
     if (shopName) garage.shopName = shopName;
     if (phone) garage.phone = phone;
     if (address) garage.address = address;
     if (fixedFee != null) garage.fixedFee = Number(fixedFee);
     if (lat != null && lng != null) garage.location = { lat: Number(lat), lng: Number(lng) };
     if (services) garage.services = services;
+    const paymentCheck = applyPaymentFields(garage, { upiId, upiQrCode, removeUpiQr });
+    if (!paymentCheck.ok) return res.status(400).json({ msg: paymentCheck.msg });
     await garage.save();
 
     res.json({ msg: "Garage updated.", garage });
@@ -77,8 +108,14 @@ exports.updateGarage = async (req, res) => {
 
 exports.getAllGarages = async (req, res) => {
   try {
-    const garages = await Garage.find({ isApproved: true }).populate("userId", "name email phone");
-    res.json(garages);
+    const garages = await Garage.find(customerVisibleGarageFilter())
+      .populate("userId", "name email phone")
+      .lean();
+    const result = garages.map(({ upiQrCode, ...rest }) => ({
+      ...rest,
+      hasUpiQr: Boolean(upiQrCode),
+    }));
+    res.json(result);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -95,7 +132,7 @@ exports.getNearbyGarages = async (req, res) => {
       return res.status(400).json({ msg: "Valid lat and lng are required for nearby search." });
     }
 
-    let garages = await Garage.find({ isApproved: true }).populate("userId", "name email phone");
+    let garages = await Garage.find(customerVisibleGarageFilter()).populate("userId", "name email phone");
 
     if (query) {
       garages = garages.filter(
@@ -116,6 +153,8 @@ exports.getNearbyGarages = async (req, res) => {
         const etaMinutes = Math.max(3, Math.round(distance * 3));
         return {
           ...g.toObject(),
+          upiQrCode: undefined,
+          hasUpiQr: Boolean(g.upiQrCode),
           distance: Number(distance.toFixed(2)),
           etaMinutes,
         };
@@ -131,5 +170,19 @@ exports.getNearbyGarages = async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+};
+
+exports.getGaragePayment = async (req, res) => {
+  try {
+    const garage = await Garage.findById(req.params.id).select(
+      "shopName upiId upiQrCode isApproved moderationStatus"
+    );
+    if (!garage || !isGarageVisibleToCustomers(garage)) {
+      return res.status(404).json({ msg: "Garage not found or not available." });
+    }
+    res.json(publicPaymentPayload(garage));
+  } catch (err) {
+    res.status(500).json({ msg: "Could not load payment details.", error: err.message });
   }
 };

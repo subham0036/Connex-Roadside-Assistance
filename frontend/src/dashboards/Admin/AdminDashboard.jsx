@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import api from "../../config/api";
+import GarageModerationModal from "../../components/Admin/GarageModerationModal";
+import "../../components/Admin/GarageModerationModal.css";
 import "./AdminDashboard.css";
 
 const TABS = ["overview", "staff", "customers", "garages", "requests"];
@@ -13,6 +15,7 @@ export default function AdminDashboard() {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expandedCustomer, setExpandedCustomer] = useState(null);
+  const [moderatingGarage, setModeratingGarage] = useState(null);
 
   useEffect(() => {
     loadAll();
@@ -39,10 +42,7 @@ export default function AdminDashboard() {
     setLoading(false);
   };
 
-  const toggleApproval = async (id, current) => {
-    await api.patch(`/api/admin/garages/${id}/approval`, { isApproved: !current });
-    loadAll();
-  };
+  const garageStatus = (g) => g.moderationStatus || (g.isApproved ? "active" : "suspended");
 
   if (loading) {
     return (
@@ -103,8 +103,12 @@ export default function AdminDashboard() {
                 <div key={g._id} className="admin-row">
                   <div>
                     <strong>{g.shopName}</strong>
+                    <span className={`status-badge moderation-status moderation-status--${garageStatus(g)}`}>
+                      {garageStatus(g)}
+                    </span>
                     <p className="panel-sub">
                       {g.address} · ₹{g.fixedFee} visit fee
+                      {g.userId?.email ? ` · ${g.userId.email}` : ""}
                       {g.location?.lat != null && (
                         <>
                           {" "}
@@ -112,14 +116,30 @@ export default function AdminDashboard() {
                         </>
                       )}
                     </p>
+                    {(g.adminNotices || []).length > 0 && (
+                      <p className="admin-garage-meta panel-sub">
+                        {g.adminNotices.length} notice{g.adminNotices.length !== 1 ? "s" : ""} sent
+                      </p>
+                    )}
                   </div>
-                  <button
-                    type="button"
-                    className={g.isApproved ? "btn-secondary" : "btn-primary"}
-                    onClick={() => toggleApproval(g._id, g.isApproved)}
-                  >
-                    {g.isApproved ? "Suspend" : "Approve"}
-                  </button>
+                  <div className="admin-garage-actions">
+                    <button
+                      type="button"
+                      className="btn-primary"
+                      onClick={() => setModeratingGarage(g)}
+                    >
+                      Manage
+                    </button>
+                    {garageStatus(g) !== "active" && (
+                      <button
+                        type="button"
+                        className="btn-secondary"
+                        onClick={() => setModeratingGarage({ ...g, _openActivate: true })}
+                      >
+                        Reactivate
+                      </button>
+                    )}
+                  </div>
                 </div>
               ))}
             </section>
@@ -225,6 +245,14 @@ export default function AdminDashboard() {
             </div>
           ))}
         </section>
+      )}
+      {moderatingGarage && (
+        <GarageModerationModal
+          garage={moderatingGarage}
+          initialAction={moderatingGarage._openActivate ? "activate" : "warning"}
+          onClose={() => setModeratingGarage(null)}
+          onDone={loadAll}
+        />
       )}
     </div>
   );

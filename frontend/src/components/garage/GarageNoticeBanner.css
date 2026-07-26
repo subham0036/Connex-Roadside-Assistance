@@ -1,0 +1,50 @@
+.garage-notice-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-lg);
+  border-left: 4px solid;
+}
+
+.garage-notice-banner p {
+  margin: 6px 0 0;
+  line-height: 1.5;
+}
+
+.garage-notice-sub {
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.garage-notice-banner--danger {
+  background: #fef2f2;
+  border-color: #ef4444;
+  color: #991b1b;
+}
+
+.garage-notice-banner--warn {
+  background: #fffbeb;
+  border-color: #f59e0b;
+  color: #92400e;
+}
+
+.garage-notice-banner--warning {
+  background: #fff7ed;
+  border-color: #f97316;
+  color: #9a3412;
+}
+
+.garage-notice-banner--info {
+  background: #eff6ff;
+  border-color: #3b82f6;
+  color: #1e40af;
+}
+
+@media (max-width: 640px) {
+  .garage-notice-banner {
+    flex-direction: column;
+  }
+}

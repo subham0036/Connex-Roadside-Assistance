@@ -6,8 +6,10 @@ const requireRole = require("../middleware/roleMiddleware");
 
 router.post("/register", auth, requireRole("mechanic"), garageController.registerGarage);
 router.get("/mine", auth, requireRole("mechanic"), garageController.getMyGarage);
+router.post("/mine/notices/read", auth, requireRole("mechanic"), garageController.markNoticesRead);
 router.put("/mine", auth, requireRole("mechanic"), garageController.updateGarage);
 router.get("/all", garageController.getAllGarages);
 router.get("/nearby", garageController.getNearbyGarages);
+router.get("/:id/payment", garageController.getGaragePayment);
 
 module.exports = router;
