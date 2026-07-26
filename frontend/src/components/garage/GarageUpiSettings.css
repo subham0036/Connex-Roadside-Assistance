@@ -1,0 +1,62 @@
+.garage-upi-settings {
+  margin-bottom: var(--space-lg);
+}
+
+.garage-upi-settings--missing {
+  border: 2px solid #fdba74;
+  background: #fff7ed;
+}
+
+.garage-upi-toggle {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-md);
+  background: none;
+  border: none;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.garage-upi-toggle h3 {
+  margin: 0 0 4px;
+}
+
+.garage-upi-chevron {
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--text-muted);
+}
+
+.garage-upi-form {
+  margin-top: var(--space-md);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.garage-upi-form label {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.garage-upi-form .btn-primary {
+  align-self: flex-start;
+  margin-top: var(--space-sm);
+}
+
+.upi-setup-section {
+  margin-top: var(--space-lg);
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.upi-setup-section h3 {
+  margin: 0 0 var(--space-sm);
+}

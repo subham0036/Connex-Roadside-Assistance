@@ -29,7 +29,7 @@ const ROLE_LINKS = {
     },
     {
       to: "/garage/setup",
-      label: "Garage",
+      label: "Garage & UPI",
       icon: <Wrench size={22} />,
     },
   ],

@@ -8,10 +8,12 @@ import { useIncomingVideoCalls } from "../../hooks/useVideoCallInvite";
 import { useStaffTracking } from "../../hooks/useStaffTracking";
 import RequestDetailsModal from "../../components/garage/RequestDetailsModal";
 import GarageNoticeBanner from "../../components/garage/GarageNoticeBanner";
+import GarageUpiSettings from "../../components/garage/GarageUpiSettings";
 import { GarageRequestActions } from "../../components/jobs/RequestActions";
 import { requestTotalPaid } from "../../utils/requestPayments";
 import "../../components/jobs/RequestActions.css";
 import "../../components/garage/GarageNoticeBanner.css";
+import "../../components/garage/GarageUpiSettings.css";
 import "../../dashboards/Garage/GarageDashboard.css";
 
 const STATUS_LABEL = {
@@ -238,6 +240,17 @@ export default function GarageDashboard() {
       </header>
 
       <GarageNoticeBanner garage={garage} onDismiss={loadData} />
+
+      {garage && (
+        <GarageUpiSettings
+          garage={garage}
+          defaultOpen={!garage.upiId && !garage.upiQrCode}
+          onSaved={(updated) => {
+            if (updated) setGarage((g) => ({ ...g, ...updated }));
+            loadData();
+          }}
+        />
+      )}
 
       {liveRequest && mapCenter?.lat != null && (
         <section className="premium-card live-track-panel">
